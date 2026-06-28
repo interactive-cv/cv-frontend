@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useRef } from "react";
 import type { ChatStyle } from "@/lib/chatStyles";
 
 interface Props {
@@ -13,11 +14,27 @@ interface Props {
 const baseWrap =
   "fixed bottom-6 right-6 z-40 select-none cursor-pointer flex items-center justify-center";
 
+// Порог отличия одинарного клика от двойного (мс).
+const DBLCLICK_THRESHOLD = 280;
+
 export default function ChatFab({ style, onOpen, onCycleStyle }: Props) {
-  // Двойной клик — переключение стиля, одинарный — открыть чат.
-  const handleClick = (e: React.MouseEvent) => {
-    if (e.detail === 2) onCycleStyle();
-    else onOpen();
+  // Таймер отложенного открытия. Если в течение порога приходит второй клик —
+  // отменяем открытие и переключаем стиль (одиночный клик не должен перебивать двойной).
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleClick = () => {
+    if (clickTimer.current) {
+      // Второй клик в пределах порога → это двойной клик.
+      clearTimeout(clickTimer.current);
+      clickTimer.current = null;
+      onCycleStyle();
+    } else {
+      // Первый клик → ждём, не будет ли второго.
+      clickTimer.current = setTimeout(() => {
+        clickTimer.current = null;
+        onOpen();
+      }, DBLCLICK_THRESHOLD);
+    }
   };
 
   return (

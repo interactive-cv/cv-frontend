@@ -21,7 +21,9 @@ test("opens widget and sends message to /api/chat", async () => {
   const user = userEvent.setup();
   render(<ChatWidget />);
   await user.click(screen.getByRole("button", { name: /чат/i }));
-  await user.type(screen.getByPlaceholderText(/спросите/i), "Чем занимаешься?");
+  // Открытие панели задержано (различение одинарного/двойного клика) — ждём input.
+  const input = await screen.findByPlaceholderText(/спросите/i, undefined, { timeout: 1500 });
+  await user.type(input, "Чем занимаешься?");
   await user.click(screen.getByRole("button", { name: /отправить/i }));
 
   // появление user-сообщения в DOM доказывает, что send() отработал
