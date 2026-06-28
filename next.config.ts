@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // standalone — минимальный прод-сервер без полного node_modules (для Docker).
+  output: "standalone",
 };
 
 export default nextConfig;
