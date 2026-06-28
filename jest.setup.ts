@@ -23,3 +23,6 @@ class IO {
 }
 (globalThis as unknown as Record<string, unknown>).IntersectionObserver = IO;
 (globalThis as unknown as Record<string, unknown>).ResizeObserver = IO;
+
+// jsdom не реализует Element.scrollIntoView — нужен для авто-прокрутки чата.
+Element.prototype.scrollIntoView = () => {};

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ChatMessage from "./ChatMessage";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -15,6 +15,12 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [streaming, setStreaming] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Авто-прокрутка к последнему сообщению при новых сообщениях или стриминге.
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, streaming]);
 
   async function send() {
     const userMsg = input.trim();
@@ -60,14 +66,18 @@ export default function ChatWidget() {
         <span className="text-xl">{open ? "✕" : "💬"}</span>
       </button>
       {open && (
-        <div className="fixed bottom-24 right-6 w-80 h-96 bg-gray-900 border border-gray-800 rounded-2xl flex flex-col p-3 shadow-2xl z-40">
-          <div className="flex-1 overflow-y-auto">
+        <div className="fixed bottom-24 right-6 w-80 bg-gray-900 border border-gray-800 rounded-2xl flex flex-col p-3 shadow-2xl z-40">
+          {/* Контейнер сообщений: растёт с контентом до max-h, далее — скролл.
+              min-h чтобы пустой чат не схлопывался. */}
+          <div className="flex-1 min-h-0 max-h-96 overflow-y-auto mb-2">
             {messages.map((m, i) => (
               <ChatMessage key={i} {...m} />
             ))}
             {streaming && <ChatMessage role="assistant" text={streaming} />}
+            {/* Якорь авто-прокрутки. */}
+            <div ref={messagesEndRef} />
           </div>
-          <div className="flex gap-2 mt-2">
+          <div className="flex gap-2">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
