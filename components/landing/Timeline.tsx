@@ -20,6 +20,7 @@ export default function Timeline({ projects }: { projects: Project[] }) {
             viewport={{ once: true }}
             transition={{ delay: i * 0.04 }}
             className="relative pl-8 pb-6"
+            suppressHydrationWarning
           >
             {/* Точка на линии */}
             <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-blue-600 ring-4 ring-blue-600/20" />
