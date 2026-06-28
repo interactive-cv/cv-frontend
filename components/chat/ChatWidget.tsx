@@ -2,6 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import ChatMessage from "./ChatMessage";
+import ChatFab from "./ChatFab";
+import {
+  loadChatStyle,
+  saveChatStyle,
+  nextStyle,
+  CHAT_STYLES,
+  type ChatStyle,
+} from "@/lib/chatStyles";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -15,16 +23,28 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [streaming, setStreaming] = useState("");
+  const [style, setStyle] = useState<ChatStyle>("capsule");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Гидратация: загружаем выбранный стиль из localStorage (только на клиенте).
+  useEffect(() => {
+    setStyle(loadChatStyle());
+  }, []);
 
   // Авто-прокрутка к последнему сообщению при новых сообщениях или стриминге.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, streaming]);
 
+  function cycleStyle() {
+    const nxt = nextStyle(style);
+    setStyle(nxt);
+    saveChatStyle(nxt);
+  }
+
   async function send() {
     const userMsg = input.trim();
-    if (!userMsg || streaming) return; // не пускаем повторный запрос во время стрима
+    if (!userMsg || streaming) return;
     setInput("");
     setMessages((m) => [...m, { role: "user", text: userMsg }]);
     setStreaming("…");
@@ -58,23 +78,29 @@ export default function ChatWidget() {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(!open)}
-        aria-label="Чат"
-        className="fixed bottom-6 right-6 bg-blue-600 rounded-full h-14 w-14 flex items-center justify-center shadow-xl shadow-blue-600/30 hover:bg-blue-500 hover:scale-105 transition-all z-40"
-      >
-        <span className="text-xl">{open ? "✕" : "💬"}</span>
-      </button>
+      {!open && <ChatFab style={style} onOpen={() => setOpen(true)} onCycleStyle={cycleStyle} />}
       {open && (
-        <div className="fixed bottom-24 right-6 w-80 bg-gray-900 border border-gray-800 rounded-2xl flex flex-col p-3 shadow-2xl z-40">
-          {/* Контейнер сообщений: растёт с контентом до max-h, далее — скролл.
-              min-h чтобы пустой чат не схлопывался. */}
+        <div className="fixed bottom-6 right-6 w-80 bg-gray-900 border border-gray-800 rounded-2xl flex flex-col p-3 shadow-2xl z-40">
+          {/* Заголовок с переключателем стиля (двойной клик → цикл, показ текущего). */}
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-green-500 animate-online-dot" />
+              <span className="text-sm font-medium">AI-ассистент Валерия</span>
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              aria-label="Закрыть"
+              className="text-gray-500 hover:text-white text-lg leading-none px-1"
+            >
+              ✕
+            </button>
+          </div>
+          {/* Контейнер сообщений: растёт с контентом до max-h, далее — скролл. */}
           <div className="flex-1 min-h-0 max-h-96 overflow-y-auto mb-2">
             {messages.map((m, i) => (
               <ChatMessage key={i} {...m} />
             ))}
             {streaming && <ChatMessage role="assistant" text={streaming} />}
-            {/* Якорь авто-прокрутки. */}
             <div ref={messagesEndRef} />
           </div>
           <div className="flex gap-2">
@@ -94,6 +120,12 @@ export default function ChatWidget() {
               Отправить
             </button>
           </div>
+          {/* Подсказка о скрытом переключателе (только при первом сообщении — иначе мешает). */}
+          {messages.length === 0 && (
+            <p className="mt-2 text-[10px] text-gray-600 text-center">
+              Стиль кнопки: {CHAT_STYLES.find((s) => s.id === style)?.label} · двойной клик по кнопке — смена
+            </p>
+          )}
         </div>
       )}
     </>
