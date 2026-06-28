@@ -3,13 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import ChatMessage from "./ChatMessage";
 import ChatFab from "./ChatFab";
-import {
-  loadChatStyle,
-  saveChatStyle,
-  nextStyle,
-  CHAT_STYLES,
-  type ChatStyle,
-} from "@/lib/chatStyles";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -23,24 +16,12 @@ export default function ChatWidget() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [streaming, setStreaming] = useState("");
-  const [style, setStyle] = useState<ChatStyle>("capsule");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-
-  // Гидратация: загружаем выбранный стиль из localStorage (только на клиенте).
-  useEffect(() => {
-    setStyle(loadChatStyle());
-  }, []);
 
   // Авто-прокрутка к последнему сообщению при новых сообщениях или стриминге.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, streaming]);
-
-  function cycleStyle() {
-    const nxt = nextStyle(style);
-    setStyle(nxt);
-    saveChatStyle(nxt);
-  }
 
   async function send() {
     const userMsg = input.trim();
@@ -78,10 +59,10 @@ export default function ChatWidget() {
 
   return (
     <>
-      {!open && <ChatFab style={style} onOpen={() => setOpen(true)} onCycleStyle={cycleStyle} />}
+      {!open && <ChatFab onOpen={() => setOpen(true)} />}
       {open && (
         <div className="fixed bottom-6 right-6 w-80 bg-gray-900 border border-gray-800 rounded-2xl flex flex-col p-3 shadow-2xl z-40">
-          {/* Заголовок с переключателем стиля (двойной клик → цикл, показ текущего). */}
+          {/* Заголовок панели. */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-green-500 animate-online-dot" />
@@ -120,12 +101,6 @@ export default function ChatWidget() {
               Отправить
             </button>
           </div>
-          {/* Подсказка о скрытом переключателе (только при первом сообщении — иначе мешает). */}
-          {messages.length === 0 && (
-            <p className="mt-2 text-[10px] text-gray-600 text-center">
-              Стиль кнопки: {CHAT_STYLES.find((s) => s.id === style)?.label} · двойной клик по кнопке — смена
-            </p>
-          )}
         </div>
       )}
     </>
