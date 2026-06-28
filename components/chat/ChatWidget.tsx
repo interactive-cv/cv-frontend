@@ -55,12 +55,12 @@ export default function ChatWidget() {
       <button
         onClick={() => setOpen(!open)}
         aria-label="Чат"
-        className="fixed bottom-6 right-6 bg-blue-600 rounded-full p-4 shadow-lg hover:bg-blue-500 transition-colors z-40"
+        className="fixed bottom-6 right-6 bg-blue-600 rounded-full h-14 w-14 flex items-center justify-center shadow-xl shadow-blue-600/30 hover:bg-blue-500 hover:scale-105 transition-all z-40"
       >
-        Чат
+        <span className="text-xl">{open ? "✕" : "💬"}</span>
       </button>
       {open && (
-        <div className="fixed bottom-24 right-6 w-80 h-96 bg-gray-900 rounded-lg flex flex-col p-3 shadow-xl z-40">
+        <div className="fixed bottom-24 right-6 w-80 h-96 bg-gray-900 border border-gray-800 rounded-2xl flex flex-col p-3 shadow-2xl z-40">
           <div className="flex-1 overflow-y-auto">
             {messages.map((m, i) => (
               <ChatMessage key={i} {...m} />

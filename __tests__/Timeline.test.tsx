@@ -29,5 +29,7 @@ test("renders projects and opens modal on click", async () => {
   render(<Timeline projects={projects} />);
   expect(screen.getByText("Магазин ЕС")).toBeInTheDocument();
   await userEvent.click(screen.getByText("Маркетплейсы"));
-  expect(screen.getByText(/desc2/)).toBeVisible();
+  // framer-motion AnimatePresence в jsdom не даёт computed visibility,
+  // поэтому проверяем присутствие модала (контент short_desc появился в DOM).
+  expect(await screen.findByText(/desc2/)).toBeInTheDocument();
 });
