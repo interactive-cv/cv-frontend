@@ -18,10 +18,10 @@ export default function ChatWidget() {
 
   async function send() {
     const userMsg = input.trim();
-    if (!userMsg) return;
+    if (!userMsg || streaming) return; // не пускаем повторный запрос во время стрима
     setInput("");
     setMessages((m) => [...m, { role: "user", text: userMsg }]);
-    setStreaming("");
+    setStreaming("…");
     try {
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
@@ -39,7 +39,8 @@ export default function ChatWidget() {
         setStreaming(acc);
       }
       setMessages((m) => [...m, { role: "assistant", text: acc }]);
-    } catch {
+    } catch (err) {
+      console.error("chat stream failed", err);
       setMessages((m) => [
         ...m,
         { role: "assistant", text: "AI временно недоступен. Свяжитесь напрямую в Telegram @vrg18." },
@@ -76,8 +77,9 @@ export default function ChatWidget() {
             />
             <button
               onClick={send}
+              disabled={!!streaming}
               aria-label="Отправить"
-              className="bg-blue-600 px-3 rounded text-sm hover:bg-blue-500"
+              className="bg-blue-600 px-3 rounded text-sm hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Отправить
             </button>
