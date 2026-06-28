@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import ChatMessage from "./ChatMessage";
 import ChatFab from "./ChatFab";
+import TypingIndicator from "./TypingIndicator";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -81,7 +82,11 @@ export default function ChatWidget() {
             {messages.map((m, i) => (
               <ChatMessage key={i} {...m} />
             ))}
-            {streaming && <ChatMessage role="assistant" text={streaming} />}
+            {/* Ждём первый токен → typing-индикатор; токены пошли → стримящееся сообщение. */}
+            {streaming === "…" && <TypingIndicator />}
+            {streaming && streaming !== "…" && (
+              <ChatMessage role="assistant" text={streaming} />
+            )}
             <div ref={messagesEndRef} />
           </div>
           <div className="flex gap-2">
