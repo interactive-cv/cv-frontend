@@ -1,3 +1,5 @@
+import ReactMarkdown from "react-markdown";
+
 export default function ChatMessage({
   role,
   text,
@@ -5,11 +7,24 @@ export default function ChatMessage({
   role: "user" | "assistant";
   text: string;
 }) {
-  const align = role === "user" ? "justify-end" : "justify-start";
-  const color = role === "user" ? "bg-blue-600" : "bg-gray-800";
+  const isUser = role === "user";
   return (
-    <div className={`flex ${align} mb-2`}>
-      <div className={`${color} px-3 py-2 rounded-lg max-w-[80%] text-sm`}>{text}</div>
+    <div className={`flex ${isUser ? "justify-end" : "justify-start"} mb-2`}>
+      <div
+        className={`${
+          isUser ? "bg-blue-600" : "bg-gray-800"
+        } px-3 py-2 rounded-lg max-w-[80%] text-sm`}
+      >
+        {/* Пользовательские сообщения — plain text (без интерпретации).
+            Ответы AI — markdown (жирный, списки, код). */}
+        {isUser ? (
+          text
+        ) : (
+          <div className="prose prose-invert prose-sm max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <ReactMarkdown>{text}</ReactMarkdown>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
