@@ -2,6 +2,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import Hero from "@/components/landing/Hero";
 import Timeline from "@/components/landing/Timeline";
+import KnowledgeGraph from "@/components/landing/KnowledgeGraph";
 import { getMasterCV, getProjects } from "@/lib/api";
 
 export default async function Home() {
@@ -12,6 +13,7 @@ export default async function Home() {
       <main className="max-w-4xl mx-auto px-4">
         <Hero cv={cv} />
         <Timeline projects={projects} />
+        <KnowledgeGraph projects={projects} />
       </main>
       <Footer />
     </>
