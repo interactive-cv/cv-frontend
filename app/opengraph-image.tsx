@@ -1,7 +1,8 @@
 import { ImageResponse } from "next/og";
+import { OWNER_NAME, OWNER_ROLE, DEFAULT_TITLE } from "@/lib/site";
 
 export const runtime = "edge";
-export const alt = "Имя Фамилия — Flutter / Fullstack";
+export const alt = DEFAULT_TITLE;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -41,13 +42,13 @@ export default function OGImage() {
           <span style={{ fontSize: 24, color: "#9ca3af" }}>AI-портфолио</span>
         </div>
         <h1 style={{ fontSize: 72, fontWeight: 700, margin: 0, lineHeight: 1.1 }}>
-          Имя Фамилия
+          {OWNER_NAME}
         </h1>
         <p style={{ fontSize: 36, color: "#9ca3af", margin: "16px 0 0 0" }}>
-          Flutter / Fullstack · 11+ лет
+          {OWNER_ROLE}
         </p>
         <div style={{ display: "flex", gap: 12, marginTop: 40 }}>
-          {["Flutter", "Fullstack", "DevOps", "Java", "Next.js"].map((t) => (
+          {["Fullstack", "Next.js", "FastAPI", "PostgreSQL", "Docker"].map((t) => (
             <span
               key={t}
               style={{

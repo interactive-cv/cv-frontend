@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
+import { SITE_URL, OWNER_NAME, DEFAULT_TITLE } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -13,8 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://cv.example.com";
-const TITLE = "Имя Фамилия — Fullstack";
+const TITLE = DEFAULT_TITLE;
 const DESCRIPTION =
   "Интерактивное резюме и портфолио. AI-ассистент ответит на ваши вопросы по CV.";
 
@@ -22,16 +22,16 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: TITLE,
-    template: "%s · Имя Фамилия",
+    template: `%s · ${OWNER_NAME}`,
   },
   description: DESCRIPTION,
   keywords: ["резюме", "портфолио", "Next.js", "FastAPI", "Fullstack"],
-  authors: [{ name: "Имя Фамилия" }],
+  authors: [{ name: OWNER_NAME }],
   openGraph: {
     type: "website",
     locale: "ru_RU",
     url: SITE_URL,
-    siteName: "Имя Фамилия — портфолио",
+    siteName: `${OWNER_NAME} — портфолио`,
     title: TITLE,
     description: DESCRIPTION,
   },

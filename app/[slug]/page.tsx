@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getVariant, serverApiUrl } from "@/lib/api";
+import { OWNER_NAME, OWNER_ROLE } from "@/lib/site";
 import CVPage from "@/components/cv/CVPage";
 
 // Короткий код ссылки: 4-6 заглавных букв (формат админки, Задача 6).
@@ -16,8 +17,8 @@ export async function generateMetadata({
   // Короткая ссылка — общее превью (slug варианта узнается только после резолва).
   if (SHORT_CODE_RE.test(slug)) {
     return {
-      title: "CV Имя Фамилия",
-      description: "Flutter / Fullstack разработчик. Откройте, чтобы посмотреть резюме.",
+      title: `CV ${OWNER_NAME}`,
+      description: `${OWNER_ROLE}. Откройте, чтобы посмотреть резюме.`,
     };
   }
   // Реальный slug — пытаемся получить title варианта для персонализированного превью.

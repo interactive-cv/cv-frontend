@@ -2,13 +2,14 @@
 
 import { motion } from "framer-motion";
 import type { MasterCV } from "@/lib/types";
+import { OWNER_NAME, OWNER_ROLE } from "@/lib/site";
 
 const FALLBACK = {
-  name: "Имя Фамилия",
-  tagline: "Flutter / Fullstack · 11+ лет опыта",
+  name: OWNER_NAME,
+  tagline: OWNER_ROLE,
   city: "Город",
   format: "удалёнка",
-  badges: ["Flutter", "Fullstack", "DevOps"],
+  badges: ["Fullstack", "Next.js", "FastAPI"],
 };
 
 // Без initial-opacity: SSR рендерит видимый контент (хорошо для SEO/восприятия),
