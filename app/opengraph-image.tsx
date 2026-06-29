@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "Валерий Григорьев — Flutter / Fullstack";
+export const alt = "Имя Фамилия — Flutter / Fullstack";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -41,7 +41,7 @@ export default function OGImage() {
           <span style={{ fontSize: 24, color: "#9ca3af" }}>AI-портфолио</span>
         </div>
         <h1 style={{ fontSize: 72, fontWeight: 700, margin: 0, lineHeight: 1.1 }}>
-          Валерий Григорьев
+          Имя Фамилия
         </h1>
         <p style={{ fontSize: 36, color: "#9ca3af", margin: "16px 0 0 0" }}>
           Flutter / Fullstack · 11+ лет

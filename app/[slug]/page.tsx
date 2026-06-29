@@ -16,7 +16,7 @@ export async function generateMetadata({
   // Короткая ссылка — общее превью (slug варианта узнается только после резолва).
   if (SHORT_CODE_RE.test(slug)) {
     return {
-      title: "CV Валерия Григорьева",
+      title: "CV Имя Фамилия",
       description: "Flutter / Fullstack разработчик. Откройте, чтобы посмотреть резюме.",
     };
   }

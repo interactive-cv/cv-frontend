@@ -13,28 +13,25 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = "https://cv.libera.pro";
-const TITLE = "Валерий Григорьев — Flutter / Fullstack";
+const SITE_URL = "https://cv.example.com";
+const TITLE = "Имя Фамилия — Fullstack";
 const DESCRIPTION =
-  "Резюме и портфолио: Flutter, Fullstack, DevOps. 11+ лет опыта. AI-ассистент ответит на ваши вопросы по CV.";
+  "Интерактивное резюме и портфолио. AI-ассистент ответит на ваши вопросы по CV.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: TITLE,
-    template: "%s · Валерий Григорьев",
+    template: "%s · Имя Фамилия",
   },
   description: DESCRIPTION,
-  keywords: [
-    "Flutter", "Fullstack", "Dart", "Java", "Spring", "Next.js",
-    "DevOps", "Docker", "PostgreSQL", "резюме", "портфолио",
-  ],
-  authors: [{ name: "Валерий Григорьев" }],
+  keywords: ["резюме", "портфолио", "Next.js", "FastAPI", "Fullstack"],
+  authors: [{ name: "Имя Фамилия" }],
   openGraph: {
     type: "website",
     locale: "ru_RU",
     url: SITE_URL,
-    siteName: "Валерий Григорьев — портфолио",
+    siteName: "Имя Фамилия — портфолио",
     title: TITLE,
     description: DESCRIPTION,
   },

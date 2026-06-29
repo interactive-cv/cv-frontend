@@ -51,7 +51,7 @@ export default function ChatWidget() {
       console.error("chat stream failed", err);
       setMessages((m) => [
         ...m,
-        { role: "assistant", text: "AI временно недоступен. Свяжитесь напрямую в Telegram @vrg18." },
+        { role: "assistant", text: "AI временно недоступен. Свяжитесь напрямую в Telegram @your_handle." },
       ]);
     } finally {
       setStreaming("");

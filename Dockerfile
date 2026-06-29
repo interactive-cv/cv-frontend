@@ -9,7 +9,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # NEXT_PUBLIC_API_URL задаётся build-time (публичная переменная клиента).
-ARG NEXT_PUBLIC_API_URL=https://cv.libera.pro
+ARG NEXT_PUBLIC_API_URL=https://cv.example.com
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 

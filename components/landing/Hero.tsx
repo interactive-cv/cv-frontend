@@ -4,9 +4,9 @@ import { motion } from "framer-motion";
 import type { MasterCV } from "@/lib/types";
 
 const FALLBACK = {
-  name: "Валерий Григорьев",
+  name: "Имя Фамилия",
   tagline: "Flutter / Fullstack · 11+ лет опыта",
-  city: "Геленджик",
+  city: "Город",
   format: "удалёнка",
   badges: ["Flutter", "Fullstack", "DevOps"],
 };
