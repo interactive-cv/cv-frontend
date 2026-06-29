@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# cv-frontend
 
-## Getting Started
+Фронтенд персонального сайта-портфолио **[cv.libera.pro](https://cv.libera.pro)** — на Next.js 16 (App Router, TypeScript, Tailwind CSS). Обращается к собственному FastAPI-бэкенду ([cv-backend](../cv-backend)).
 
-First, run the development server:
+Сайт задуман не как статичная «визитка», а как интерактивная витрина: кроме классического резюме здесь — кликабельный таймлайн проектов, граф связей технологий и **плавающий AI-чат**, в который рекрутёр может задать вопрос и получить ответ по фактам из CV.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Технологии
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **Next.js 16 (App Router) + React 19** — серверный рендеринг (SSR) лендинга и страниц резюме
+- **TypeScript (strict)** — строгая типизация, без `any`
+- **Tailwind CSS v4 + @tailwindcss/typography** — оформление, тёмная тема
+- **framer-motion** — анимации появления и переходов
+- **react-force-graph-2d** — интерактивный граф знаний
+- **react-markdown** — рендер ответов AI и страниц CV
+- **Jest (next/jest) + Testing Library** — 5 тестов на критичные компоненты
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Что внутри
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Страница / компонент | Что делает |
+|----------------------|-----------|
+| `/` лендинг | Hero, блок навыков, кликабельный таймлайн проектов с модальными окнами, граф знаний |
+| `/{slug}` страница CV | SSR-рендер варианта резюме под конкретную вакансию (markdown → красивый текст) |
+| `/{CODE}` короткая ссылка | Резолв кода → редирект на нужный вариант CV; истёкшая — аккуратный баннер |
+| Чат-виджет | Плавающая кнопка, потоковый ответ AI с typing-индикатором, ответы в markdown |
 
-## Learn More
+## Интеграция AI (со стороны фронта)
 
-To learn more about Next.js, take a look at the following resources:
+AI-чат — ключевой элемент, который обращает на себя внимание рекрутёра. Реализация на клиенте:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Потоковая передача** ответа через `ReadableStream` — токены появляются по мере генерации, как в ChatGPT, а не после полной загрузки. Плюс анимированный typing-индикатор (три точки), пока модель «думает».
+- **Защита от галлюцинаций лежит на бэкендe** (жёсткий системный промпт + e2e-тесты RAG) — фронт честно показывает то, что приходит. Запасной сценарий graceful degradation тоже на сервере: при сбое LLM приходит сообщение с контактами, виджет не падает.
+- Сообщения пользователя рендерятся как plain text (без интерпретации ввода как разметки — безопасность), ответы AI — через `react-markdown`.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## SEO и шеринг
 
-## Deploy on Vercel
+Ссылки на CV обычно кидают в мессенджеры, поэтому превью ссылки — первое впечатление:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Динамическая OG-картинка** (`opengraph-image.tsx`, генерируется через `ImageResponse`) — имя, стек, бейджи навыков на градиентном фоне
+- **Персонализированные метаданные** для каждой страницы CV через `generateMetadata` — превью показывает название конкретного варианта резюме
+- **favicon, robots.txt, sitemap.xml** генерируются Next.js автоматически
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Развёртывание
+
+Прод-окружение — собственный VPS с Docker Compose, фронт собирается multi-stage сборкой (`Dockerfile`): на этапе build ставятся зависимости и собирается production-билд Next.js (`output: "standalone"`), в runtime крутится минимальный образ без полного `node_modules`. Главная страница помечена `force-dynamic` — данные берутся из API при каждом запросе, поэтому сборка не зависит от доступности бэкенда.
+
+Весь стек (вместе с бэкендом и nginx) поднимается одной командой из репозитория [cv-backend](../cv-backend) — `bash deploy.sh`.

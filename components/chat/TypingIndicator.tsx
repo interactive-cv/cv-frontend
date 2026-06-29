@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 
 /**
- * Typing-индикатор: три точки, подпрыгивающие по очереди.
+ * Индикатор набора: три точки, подпрыгивающие по очереди.
  * Показывается, пока AI формирует ответ.
  */
 export default function TypingIndicator() {

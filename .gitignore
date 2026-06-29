@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Файлы инструкций для AI-ассистентов (не публикуется)
+AGENTS.md
+CLAUDE.md
+.cursor/
+.aider*
