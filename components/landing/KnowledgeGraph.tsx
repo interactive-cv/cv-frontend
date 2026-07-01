@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { buildGraph } from "@/lib/graph";
 import type { Project } from "@/lib/types";
 
@@ -11,15 +11,8 @@ const ForceGraph = dynamic(() => import("react-force-graph-2d"), { ssr: false })
 export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
   const { nodes, links } = useMemo(() => buildGraph(projects), [projects]);
   const graphRef = useRef<{ zoomToFit: (ms?: number, pad?: number) => void } | undefined>(undefined);
-
-  // После монтирования графа — масштабируем, чтобы заполнить окно и отцентрировать.
-  // zoomToFit подбирает масштаб так, чтобы все узлы поместились с отступом.
-  useEffect(() => {
-    if (!graphRef.current) return;
-    // Небольшая задержка — даёт силовому алгоритму разложиться перед fit.
-    const t = setTimeout(() => graphRef.current?.zoomToFit(400, 40), 300);
-    return () => clearTimeout(t);
-  }, [nodes, links]);
+  // fit делаем один раз — после остановки силового движка.
+  const [didFit, setDidFit] = useState(false);
 
   return (
     <section id="graph" className="py-12">
@@ -35,8 +28,17 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
           nodeAutoColorBy="group"
           linkColor={() => "#4b5563"}
           backgroundColor="#111827"
-          // Узлами управляет силовой алгоритм (красивее), не ручное перетаскивание.
+          // Узлами управляет силовой алгоритм, не ручное перетаскивание.
           enableNodeDrag={false}
+          // Граф успокаивается за конечное число тиков и останавливается
+          // (не «дёргается» бесконечно).
+          cooldownTicks={100}
+          // Один раз после остановки движка — подгоняем камеру под все узлы.
+          onEngineStop={() => {
+            if (didFit) return;
+            setDidFit(true);
+            graphRef.current?.zoomToFit(400, 40);
+          }}
         />
       </div>
     </section>
