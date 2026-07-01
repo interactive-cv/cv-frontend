@@ -7,9 +7,9 @@ import type { Project } from "@/lib/types";
 
 export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
   const { nodes, links } = useMemo(() => buildGraph(projects), [projects]);
-  // ref не используется для fit — координаты узлов заданы в buildGraph (круговая
-  // раскладка, центр в 0,0), дефолтный зум сам подгоняет камеру.
   const graphRef = useRef<ForceGraphMethods | undefined>(undefined);
+  // Центрируем камеру на (0,0) один раз — первый тик движка.
+  const centered = useRef(false);
 
   return (
     <section id="graph" className="py-12">
@@ -26,10 +26,15 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
           linkColor={() => "#4b5563"}
           backgroundColor="#111827"
           enableNodeDrag={false}
-          // Силовой алгоритм лёгко «доукладывает» граф (красивая анимация),
-          // но стартовые позиции уже раскиданы по кругу.
           cooldownTime={3000}
           d3AlphaDecay={0.05}
+          // Явная инициализация камеры: центр в (0,0), зум 1 — первый тик.
+          // Граф уже раскидан в координатах с центром (0,0) в buildGraph.
+          onEngineTick={() => {
+            if (centered.current) return;
+            centered.current = true;
+            graphRef.current?.centerAt(0, 0, 0);
+          }}
         />
       </div>
     </section>
