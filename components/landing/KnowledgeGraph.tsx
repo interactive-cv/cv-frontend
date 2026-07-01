@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { buildGraph } from "@/lib/graph";
 import type { Project } from "@/lib/types";
 
@@ -11,8 +11,18 @@ const ForceGraph = dynamic(() => import("react-force-graph-2d"), { ssr: false })
 export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
   const { nodes, links } = useMemo(() => buildGraph(projects), [projects]);
   const graphRef = useRef<{ zoomToFit: (ms?: number, pad?: number) => void } | undefined>(undefined);
-  // fit делаем один раз — после остановки силового движка.
-  const [didFit, setDidFit] = useState(false);
+  const didFit = useRef(false);
+
+  // Fit по событию остановки движка. Запасной путь — через 2.5с после монтирования,
+  // чтобы гарантированно подогнать камеру даже если onEngineStop не сработал.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (didFit.current) return;
+      didFit.current = true;
+      graphRef.current?.zoomToFit(400, 40);
+    }, 2500);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <section id="graph" className="py-12">
@@ -28,15 +38,13 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
           nodeAutoColorBy="group"
           linkColor={() => "#4b5563"}
           backgroundColor="#111827"
-          // Узлами управляет силовой алгоритм, не ручное перетаскивание.
           enableNodeDrag={false}
-          // Граф успокаивается за конечное число тиков и останавливается
-          // (не «дёргается» бесконечно).
-          cooldownTicks={100}
-          // Один раз после остановки движка — подгоняем камеру под все узлы.
+          // cooldownTime (мс) вместо ticks — движок стабилизируется за время,
+          // затем замораживается (граф не дёргается бесконечно).
+          cooldownTime={2000}
           onEngineStop={() => {
-            if (didFit) return;
-            setDidFit(true);
+            if (didFit.current) return;
+            didFit.current = true;
             graphRef.current?.zoomToFit(400, 40);
           }}
         />
