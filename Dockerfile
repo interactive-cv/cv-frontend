@@ -8,9 +8,15 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# NEXT_PUBLIC_API_URL задаётся build-time (публичная переменная клиента).
+# NEXT_PUBLIC_* — публичные переменные клиента, инлайнятся в бандл при next build.
 ARG NEXT_PUBLIC_API_URL=https://cv.example.com
+ARG NEXT_PUBLIC_SITE_URL=https://cv.example.com
+ARG NEXT_PUBLIC_OWNER_NAME=Имя Фамилия
+ARG NEXT_PUBLIC_OWNER_ROLE=Fullstack
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+ENV NEXT_PUBLIC_OWNER_NAME=$NEXT_PUBLIC_OWNER_NAME
+ENV NEXT_PUBLIC_OWNER_ROLE=$NEXT_PUBLIC_OWNER_ROLE
 RUN npm run build
 
 # Рантайм: только standalone output (минимальный, без node_modules полностью).
