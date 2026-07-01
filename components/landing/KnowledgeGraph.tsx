@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import ForceGraph, { type ForceGraphMethods } from "react-force-graph-2d";
 import { buildGraph } from "@/lib/graph";
 import type { Project } from "@/lib/types";
@@ -10,6 +10,7 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
   const graphRef = useRef<ForceGraphMethods | undefined>(undefined);
   // Центрируем камеру на (0,0) один раз — первый тик движка.
   const centered = useRef(false);
+  const [debug, setDebug] = useState("");
 
   return (
     <section id="graph" className="py-12">
@@ -17,6 +18,9 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
       <p className="text-sm text-gray-500 mb-3">
         Связи проектов и технологий: наведите на узел, чтобы подсветить связи.
       </p>
+      {debug && (
+        <p className="text-xs text-yellow-400 mb-2">[debug] {debug}</p>
+      )}
       <div className="h-[400px] bg-gray-900 rounded-lg overflow-hidden">
         <ForceGraph
           ref={graphRef}
@@ -33,7 +37,15 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
           onEngineTick={() => {
             if (centered.current) return;
             centered.current = true;
-            graphRef.current?.centerAt(0, 0, 0);
+            // Диагностика: реальные координаты узлов после раскладки.
+            const ns = nodes as Array<{ x?: number; y?: number }>;
+            const xs = ns.map((n) => n.x ?? 0);
+            const ys = ns.map((n) => n.y ?? 0);
+            const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
+            const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+            console.log("[graph] bbox center:", cx, cy, "| nodes:", ns.length);
+            setDebug(`bbox center: ${cx.toFixed(0)}, ${cy.toFixed(0)} | nodes: ${ns.length}`);
+            graphRef.current?.centerAt(cx, cy, 0);
           }}
         />
       </div>
