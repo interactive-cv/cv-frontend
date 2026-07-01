@@ -20,9 +20,10 @@ export interface GraphLink {
  * т.к. API камеры force-graph в этом окружении не сдвигает проекцию.
  * Размер контейнера графа: ~768×400 (max-w-4xl, h-[400px]).
  */
-const CANVAS_CENTER_X = 380;
-const CANVAS_CENTER_Y = 200;
-
+/**
+ * Круговая раскладка: проекты по внешнему кругу, навыки — на внутреннем.
+ * Центр в (0,0) — zoomToFit force-graph центрирует canvas по фактическим позициям.
+ */
 export function buildGraph(
   projects: Project[]
 ): { nodes: GraphNode[]; links: GraphLink[] } {
@@ -31,19 +32,17 @@ export function buildGraph(
   const seenSkill = new Set<string>();
 
   const projectCount = projects.length;
-  const projectRadius = projectCount > 0 ? 160 : 0;
+  const projectRadius = projectCount > 0 ? 250 : 0;
 
   projects.forEach((p, i) => {
-    // Проект — на внешнем круге, центр смещён в середину canvas.
     const pAngle = (i / projectCount) * 2 * Math.PI;
     nodes.push({
       id: p.title,
       group: "project",
       label: p.title,
-      x: CANVAS_CENTER_X + Math.cos(pAngle) * projectRadius,
-      y: CANVAS_CENTER_Y + Math.sin(pAngle) * projectRadius,
+      x: Math.cos(pAngle) * projectRadius,
+      y: Math.sin(pAngle) * projectRadius,
     });
-    // Навыки проекта — на внутреннем круге.
     const techs = [...p.tags, ...p.stack];
     techs.forEach((s, j) => {
       if (!seenSkill.has(s)) {
@@ -54,8 +53,8 @@ export function buildGraph(
           id: s,
           group: "skill",
           label: s,
-          x: CANVAS_CENTER_X + Math.cos(sAngle) * skillRadius,
-          y: CANVAS_CENTER_Y + Math.sin(sAngle) * skillRadius,
+          x: Math.cos(sAngle) * skillRadius,
+          y: Math.sin(sAngle) * skillRadius,
         });
       }
       links.push({ source: p.title, target: s });
