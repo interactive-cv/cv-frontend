@@ -28,7 +28,7 @@ export function buildGraph(
   const seenSkill = new Set<string>();
 
   const projectCount = projects.length;
-  const projectRadius = projectCount > 0 ? 180 : 0;
+  const projectRadius = projectCount > 0 ? 300 : 0;
 
   projects.forEach((p, i) => {
     // Проект — на внешнем круге.
