@@ -8,6 +8,7 @@ import type { Project } from "@/lib/types";
 export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
   const { nodes, links } = useMemo(() => buildGraph(projects), [projects]);
   const graphRef = useRef<ForceGraphMethods | undefined>(undefined);
+  const fitted = useRef(false);
 
   return (
     <section id="graph" className="py-12">
@@ -26,6 +27,14 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
           enableNodeDrag={false}
           cooldownTime={3000}
           d3AlphaDecay={0.05}
+          // После первого тика движка — подгоняем камеру (зум + центр)
+          // под фактические позиции узлов. Узлы уже раскиданы круговой раскладкой
+          // в buildGraph, поэтому одного вызова достаточно.
+          onEngineTick={() => {
+            if (fitted.current) return;
+            fitted.current = true;
+            graphRef.current?.zoomToFit(500, 60);
+          }}
         />
       </div>
     </section>
