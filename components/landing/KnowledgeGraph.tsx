@@ -33,8 +33,6 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
           linkColor={() => "#4b5563"}
           backgroundColor="#111827"
           enableNodeDrag={false}
-          enableZoomInteraction={false}
-          enablePanInteraction={false}
           cooldownTime={3000}
           d3AlphaDecay={0.05}
           // После остановки движка подгоняем камеру под все узлы.
