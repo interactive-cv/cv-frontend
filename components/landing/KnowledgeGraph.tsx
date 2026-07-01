@@ -1,16 +1,15 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import ForceGraph, { type ForceGraphMethods } from "react-force-graph-2d";
 import { buildGraph } from "@/lib/graph";
 import type { Project } from "@/lib/types";
 
 export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
   const { nodes, links } = useMemo(() => buildGraph(projects), [projects]);
-  // Нативный тип инстанса графа — ref пробрасывается напрямую (без dynamic-обёртки).
+  // ref не используется для fit — координаты узлов заданы в buildGraph (круговая
+  // раскладка, центр в 0,0), дефолтный зум сам подгоняет камеру.
   const graphRef = useRef<ForceGraphMethods | undefined>(undefined);
-  const [fitted, setFitted] = useState(false);
-  const tickCount = useRef(0);
 
   return (
     <section id="graph" className="py-12">
@@ -27,14 +26,10 @@ export default function KnowledgeGraph({ projects }: { projects: Project[] }) {
           linkColor={() => "#4b5563"}
           backgroundColor="#111827"
           enableNodeDrag={false}
-          cooldownTime={2000}
-          // После ~60 тиков (движок разложил узлы) подгоняем камеру один раз.
-          onEngineTick={() => {
-            tickCount.current += 1;
-            if (fitted || tickCount.current < 60) return;
-            setFitted(true);
-            graphRef.current?.zoomToFit(0, 40);
-          }}
+          // Силовой алгоритм лёгко «доукладывает» граф (красивая анимация),
+          // но стартовые позиции уже раскиданы по кругу.
+          cooldownTime={3000}
+          d3AlphaDecay={0.05}
         />
       </div>
     </section>
