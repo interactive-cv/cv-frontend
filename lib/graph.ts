@@ -15,11 +15,14 @@ export interface GraphLink {
 }
 
 /**
- * Круговая раскладка: проекты по внешнему кругу, навыки — на внутреннем,
- * равномерно между проектами. Граф центрирован в (0,0), узлы не сгруппированы
- * в точке — поэтому дефолтный зум force-graph (обратно пропорционален числу узлов)
- * корректно подгоняет камеру под весь граф.
+ * Круговая раскладка: проекты по внешнему кругу, навыки — на внутреннем.
+ * Координаты центрированы в середине canvas-области графа (а не в 0,0),
+ * т.к. API камеры force-graph в этом окружении не сдвигает проекцию.
+ * Размер контейнера графа: ~768×400 (max-w-4xl, h-[400px]).
  */
+const CANVAS_CENTER_X = 380;
+const CANVAS_CENTER_Y = 200;
+
 export function buildGraph(
   projects: Project[]
 ): { nodes: GraphNode[]; links: GraphLink[] } {
@@ -28,32 +31,31 @@ export function buildGraph(
   const seenSkill = new Set<string>();
 
   const projectCount = projects.length;
-  const projectRadius = projectCount > 0 ? 300 : 0;
+  const projectRadius = projectCount > 0 ? 160 : 0;
 
   projects.forEach((p, i) => {
-    // Проект — на внешнем круге.
+    // Проект — на внешнем круге, центр смещён в середину canvas.
     const pAngle = (i / projectCount) * 2 * Math.PI;
     nodes.push({
       id: p.title,
       group: "project",
       label: p.title,
-      x: Math.cos(pAngle) * projectRadius,
-      y: Math.sin(pAngle) * projectRadius,
+      x: CANVAS_CENTER_X + Math.cos(pAngle) * projectRadius,
+      y: CANVAS_CENTER_Y + Math.sin(pAngle) * projectRadius,
     });
-    // Навыки проекта — на внутреннем круге вокруг его позиции.
+    // Навыки проекта — на внутреннем круге.
     const techs = [...p.tags, ...p.stack];
     techs.forEach((s, j) => {
       if (!seenSkill.has(s)) {
         seenSkill.add(s);
-        // Внутренний круг: навыки между проектами, радиус меньше.
         const sAngle = ((i + (j + 1) / (techs.length + 1)) / projectCount) * 2 * Math.PI;
         const skillRadius = projectRadius * 0.45;
         nodes.push({
           id: s,
           group: "skill",
           label: s,
-          x: Math.cos(sAngle) * skillRadius,
-          y: Math.sin(sAngle) * skillRadius,
+          x: CANVAS_CENTER_X + Math.cos(sAngle) * skillRadius,
+          y: CANVAS_CENTER_Y + Math.sin(sAngle) * skillRadius,
         });
       }
       links.push({ source: p.title, target: s });
