@@ -1,24 +1,32 @@
 /**
- * Пример генерации favicon по умолчанию для open-source-шаблона.
+ * Пример программной генерации favicon через next/og (ImageResponse).
  *
- * Этот файл НЕ используется Next.js автоматически (он лежит вне app/).
- * Это референс: скопируйте его в `app/icon.tsx`, чтобы получить
- * градиентную иконку с инициалами, либо положите свой `app/icon.png`.
+ * Этот файл НЕ используется Next.js автоматически — он лежит вне каталога app/.
+ * Это референс: скопируйте его в app/icon.tsx, если хотите генерировать иконку
+ * кодом, либо положите свой квадратный PNG в app/icon.png (по умолчанию в шаблоне
+ * лежит синяя иконка с «CV» + AI-бабблом).
  *
- * Next.js определяет favicon по конвенции имён в каталоге `app/`:
+ * Next.js определяет favicon по конвенции имён в каталоге app/:
  *   - app/icon.png  → статичная иконка (любой квадрат: 32..512px)
  *   - app/icon.tsx  → динамическая генерация через next/og (ImageResponse)
- * Несколько файлов icon.* — конфликтуют; выберите один.
+ * Несколько файлов icon.* в одном каталоге — конфликтуют; выберите один.
+ *
+ * Ограничение Satori (движок next/og): он НЕ поддерживает градиентный текст
+ * (background-clip: text) и градиентные рамки надёжно. Поэтому здесь —
+ * упрощённый дизайн с однотонными заливками, который рендерится гарантированно.
  *
  * Подробнее: https://nextjs.org/docs/app/api-reference/file-conventions/metadata/app-icons
  */
 import { ImageResponse } from "next/og";
 
-export const size = { width: 32, height: 32 };
+export const size = { width: 512, height: 512 };
 export const contentType = "image/png";
 
-/** Favicon по умолчанию: градиентный круг с инициалами. */
+/** Упрощённый favicon: градиентный круг с инициалами. */
 export default function Icon() {
+  // Satori поддерживает градиентный фон (backgroundImage), но не градиентный текст.
+  const gradient = "linear-gradient(135deg, #3b82f6, #06b6d4, #8b5cf6)";
+
   return new ImageResponse(
     (
       <div
@@ -29,13 +37,14 @@ export default function Icon() {
           alignItems: "center",
           justifyContent: "center",
           borderRadius: "50%",
-          background: "linear-gradient(120deg, #3b82f6, #06b6d4, #8b5cf6)",
+          backgroundImage: gradient,
           color: "white",
-          fontSize: 16,
-          fontWeight: 700,
+          fontSize: 240,
+          fontWeight: 800,
+          letterSpacing: -12,
         }}
       >
-        AI
+        CV
       </div>
     ),
     size
