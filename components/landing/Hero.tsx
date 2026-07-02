@@ -13,7 +13,7 @@ const FALLBACK = {
 };
 
 // Без initial-opacity: SSR рендерит видимый контент (хорошо для SEO/восприятия),
-// анимация появления стартует с лёгкого translateY без скрытия.
+// анимация появления стартает с лёгкого translateY без скрытия.
 export default function Hero({ cv }: { cv: MasterCV }) {
   const city = cv.format?.city || cv.contacts?.city || FALLBACK.city;
   const format = cv.format?.format || FALLBACK.format;
@@ -26,6 +26,17 @@ export default function Hero({ cv }: { cv: MasterCV }) {
       className="py-24 text-center"
       suppressHydrationWarning
     >
+      {/* Логотип/аватар — берётся из app/icon.png (favicon).
+          На проде (icon.personal.png → icon.png) — монашеская тема,
+          в open-source — синяя. Единый источник правды: тот же файл, что во вкладке. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/icon.png"
+        alt={`${OWNER_NAME} — логотип`}
+        width={96}
+        height={96}
+        className="mx-auto rounded-2xl shadow-lg shadow-black/40 mb-6"
+      />
       <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
         {FALLBACK.name}
       </h1>
