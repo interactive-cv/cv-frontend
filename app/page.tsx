@@ -8,6 +8,11 @@ import KnowledgeGraphClient from "@/components/landing/KnowledgeGraphClient";
 import ExpiredBanner from "@/components/landing/ExpiredBanner";
 import { getMasterCV, getProjects } from "@/lib/api";
 
+// Контент сайта может меняться через админ-панель (seed, редактирование CV),
+// поэтому рендерим страницу динамически при каждом запросе, а не кэшируем
+// статичный HTML при сборке. Без этого Next.js зафиксирует данные на build-time.
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const [cv, projects] = await Promise.all([getMasterCV(), getProjects()]);
   return (

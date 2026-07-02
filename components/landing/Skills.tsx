@@ -13,6 +13,7 @@ const CATEGORY_ORDER = [
   "СУБД",
   "BaaS",
   "CI/CD / DevOps",
+  "AI / LLM",
   "Операционные системы",
   "IDE",
   "Другое",
