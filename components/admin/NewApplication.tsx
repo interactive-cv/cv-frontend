@@ -67,9 +67,13 @@ export default function NewApplication() {
     setError("");
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
-    const slug = `${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${role
+    // Slug = company-role + короткий случайный суффикс, чтобы гарантировать
+    // уникальность даже при повторных откликах в ту же компанию/роль.
+    const base = `${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${role
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")}`.replace(/^-|-$/g, "");
+    const suffix = Math.random().toString(36).slice(2, 6);
+    const slug = `${base}-${suffix}`;
     try {
       const result = await createApplication(token, {
         company,
