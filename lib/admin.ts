@@ -26,7 +26,7 @@ export interface ApplicationDetail extends Application {
 
 /** Список откликов с inline-аналитикой. */
 export async function listApplications(token: string): Promise<Application[]> {
-  const res = await fetch(`${API}/admin/applications`, { headers: authHeaders(token) });
+  const res = await fetch(`${API}/api/admin/applications`, { headers: authHeaders(token) });
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
 }
@@ -41,7 +41,7 @@ export async function generateCV(
     selected_projects: string[];
   }
 ): Promise<{ cv_markdown: string; cover_letter: string }> {
-  const res = await fetch(`${API}/admin/applications/generate`, {
+  const res = await fetch(`${API}/api/admin/applications/generate`, {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(data),
@@ -63,7 +63,7 @@ export async function createApplication(
     status: string;
   }
 ): Promise<{ id: string; slug: string }> {
-  const res = await fetch(`${API}/admin/applications`, {
+  const res = await fetch(`${API}/api/admin/applications`, {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(data),
@@ -77,7 +77,7 @@ export async function getApplication(
   token: string,
   id: string
 ): Promise<ApplicationDetail> {
-  const res = await fetch(`${API}/admin/applications/${id}`, { headers: authHeaders(token) });
+  const res = await fetch(`${API}/api/admin/applications/${id}`, { headers: authHeaders(token) });
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
 }
@@ -88,7 +88,7 @@ export async function updateApplication(
   id: string,
   data: { cover_letter?: string; cv_markdown?: string; status?: string }
 ): Promise<void> {
-  const res = await fetch(`${API}/admin/applications/${id}`, {
+  const res = await fetch(`${API}/api/admin/applications/${id}`, {
     method: "PATCH",
     headers: authHeaders(token),
     body: JSON.stringify(data),
@@ -101,7 +101,7 @@ export async function publishApplication(
   token: string,
   id: string
 ): Promise<{ code: string; url: string }> {
-  const res = await fetch(`${API}/admin/applications/${id}/publish`, {
+  const res = await fetch(`${API}/api/admin/applications/${id}/publish`, {
     method: "POST",
     headers: authHeaders(token),
   });
@@ -111,7 +111,7 @@ export async function publishApplication(
 
 /** Архивировать. */
 export async function archiveApplication(token: string, id: string): Promise<void> {
-  const res = await fetch(`${API}/admin/applications/${id}/archive`, {
+  const res = await fetch(`${API}/api/admin/applications/${id}/archive`, {
     method: "POST",
     headers: authHeaders(token),
   });
