@@ -46,3 +46,8 @@ CLAUDE.md
 .cursor/
 .aider*
 .superpowers/
+
+# Личная иконка-фавикон (Doctor Who). В open-source-репозитории её быть не должно:
+# пользователь шаблона кладёт свой app/icon.png или использует examples/icon-default.tsx.
+# На прод (cv.libera.pro) попадает через rsync — отдельной строкой деплоя.
+app/icon.png
