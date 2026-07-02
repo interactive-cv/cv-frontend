@@ -91,6 +91,18 @@ export default function NewApplication() {
     }
   }
 
+  function handleCancel() {
+    // В фазе edit теряем сгенерированные CV/отклик (стоит денег на LLM) —
+    // предупреждаем строже. В фазе form — только введённый текст вакансии.
+    const msg =
+      phase === "edit"
+        ? "Отменить создание отклика?\n\nСгенерированные CV и отклик будут потеряны."
+        : "Отменить создание отклика?\n\nВведённые данные будут потеряны.";
+    if (window.confirm(msg)) {
+      router.push("/admin");
+    }
+  }
+
   // ===== Phase: form =====
   if (phase === "form") {
     return (
@@ -142,12 +154,20 @@ export default function NewApplication() {
               })}
             </div>
           </div>
-          <button
-            onClick={handleGenerate}
-            className="bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
-          >
-            ⚡ Сгенерировать CV и отклик
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={handleGenerate}
+              className="bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg text-sm font-medium transition-colors"
+            >
+              ⚡ Сгенерировать CV и отклик
+            </button>
+            <button
+              onClick={handleCancel}
+              className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white py-2.5 px-4 rounded-lg text-sm transition-colors"
+            >
+              Отменить
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -198,6 +218,12 @@ export default function NewApplication() {
           className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           Сохранить и опубликовать →
+        </button>
+        <button
+          onClick={handleCancel}
+          className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors"
+        >
+          Отменить
         </button>
       </div>
     </div>

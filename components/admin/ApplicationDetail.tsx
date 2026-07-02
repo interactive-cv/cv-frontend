@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { getApplication, updateApplication, publishApplication, archiveApplication } from "@/lib/admin";
 import type { ApplicationDetail } from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
@@ -15,11 +16,15 @@ const STATUS_DOT: Record<string, string> = {
 };
 
 export default function ApplicationDetail({ id }: { id: string }) {
+  const router = useRouter();
   const [data, setData] = useState<ApplicationDetail | null>(null);
   const [tab, setTab] = useState<Tab>("cv");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+
+  // Отслеживаем, были ли несохранённые правки (для подтверждения отмены).
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -41,12 +46,27 @@ export default function ApplicationDetail({ id }: { id: string }) {
         cover_letter: data.cover_letter,
       });
       setMsg("✓ Сохранено");
+      setDirty(false);
       setTimeout(() => setMsg(""), 2000);
     } catch {
       setMsg("Ошибка сохранения");
     } finally {
       setSaving(false);
     }
+  }
+
+  function handleCancel() {
+    // Если были правки — предупреждаем об их потере. Если нет — просто уходим.
+    if (dirty) {
+      if (
+        !window.confirm(
+          "Отменить редактирование?\n\nНесохранённые правки будут потеряны."
+        )
+      ) {
+        return;
+      }
+    }
+    router.push("/admin");
   }
 
   async function publish() {
@@ -104,6 +124,12 @@ export default function ApplicationDetail({ id }: { id: string }) {
           </span>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={handleCancel}
+            className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
+          >
+            ← Отменить
+          </button>
           {data.short_link_code && (
             <button
               onClick={copyLink}
@@ -156,7 +182,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
           <SplitEditor
             label="✏ CV (редактируйте markdown)"
             value={data.cv_markdown}
-            onChange={(v) => setData({ ...data, cv_markdown: v })}
+            onChange={(v) => {
+              setData({ ...data, cv_markdown: v });
+              setDirty(true);
+            }}
             minHeight={350}
           />
           <button
@@ -174,7 +203,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
           <SplitEditor
             label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
             value={data.cover_letter}
-            onChange={(v) => setData({ ...data, cover_letter: v })}
+            onChange={(v) => {
+              setData({ ...data, cover_letter: v });
+              setDirty(true);
+            }}
             minHeight={200}
           />
           <button
