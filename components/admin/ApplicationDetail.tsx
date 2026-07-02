@@ -216,6 +216,19 @@ export default function ApplicationDetail({ id }: { id: string }) {
           >
             {saving ? "Сохранение..." : "Сохранить"}
           </button>
+          {data.short_link_code && (
+            <div className="mt-4 bg-gray-900 rounded-lg p-3 border border-gray-800">
+              <div className="text-xs text-gray-500 mb-1">🔗 Ссылка на это CV (вставлена в cover letter):</div>
+              <a
+                href={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com"}/${data.short_link_code}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-400 hover:text-blue-300 underline text-sm break-all"
+              >
+                {process.env.NEXT_PUBLIC_SITE_URL?.replace(/^https?:\/\//, "") ?? "cv.example.com"}/{data.short_link_code}
+              </a>
+            </div>
+          )}
           <p className="text-xs text-gray-500 mt-2">
             Cover letter не публикуется на сайте — только для вас (скопировать в отклик на площадке).
           </p>

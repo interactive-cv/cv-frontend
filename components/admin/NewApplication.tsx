@@ -80,12 +80,10 @@ export default function NewApplication() {
         slug,
         status,
       });
-      if (status === "active") {
-        // публикация пройдёт на детальной странице
-        router.push(`/admin/${result.id}`);
-      } else {
-        router.push(`/admin/${result.id}`);
-      }
+      // Публикация (короткая ссылка + замена {CV_LINK}) происходит в самом
+      // createApplication на бэкенде, когда status=active. Дополнительно
+      // вызывать /publish не нужно — это создало бы дубликат ShortLink.
+      router.push(`/admin/${result.id}`);
     } catch (e) {
       setError(`Ошибка сохранения: ${(e as Error).message}`);
     }

@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { CVVariant } from "@/lib/types";
 
 export default function CVPage({ variant }: { variant: CVVariant }) {
@@ -9,7 +10,7 @@ export default function CVPage({ variant }: { variant: CVVariant }) {
         <p className="text-gray-400 mb-6">{variant.company}</p>
       )}
       <div className="prose prose-invert prose-cv max-w-none">
-        <ReactMarkdown>{variant.content_markdown}</ReactMarkdown>
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{variant.content_markdown}</ReactMarkdown>
       </div>
     </article>
   );
