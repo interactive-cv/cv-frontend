@@ -55,7 +55,7 @@ export default function NewApplication() {
         selected_projects: selectedProjects,
       });
       setCvMarkdown(result.cv_markdown);
-      setCoverLetter(result.cover_letter_md);
+      setCoverLetter(result.cover_letter);
       setPhase("edit");
     } catch (e) {
       setError(`Ошибка генерации: ${(e as Error).message}`);
@@ -75,7 +75,7 @@ export default function NewApplication() {
         company,
         role,
         vacancy_text: vacancyText,
-        cover_letter_md: coverLetter,
+        cover_letter: coverLetter,
         cv_markdown: cvMarkdown,
         slug,
         status,
@@ -179,7 +179,7 @@ export default function NewApplication() {
           minHeight={300}
         />
         <SplitEditor
-          label="✏ Cover letter / отклик (редактируйте markdown)"
+          label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
           value={coverLetter}
           onChange={setCoverLetter}
           minHeight={150}

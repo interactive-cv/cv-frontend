@@ -38,7 +38,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
     try {
       await updateApplication(token, id, {
         cv_markdown: data.cv_markdown,
-        cover_letter_md: data.cover_letter_md,
+        cover_letter: data.cover_letter,
       });
       setMsg("✓ Сохранено");
       setTimeout(() => setMsg(""), 2000);
@@ -172,9 +172,9 @@ export default function ApplicationDetail({ id }: { id: string }) {
       {tab === "cover" && (
         <div>
           <SplitEditor
-            label="✏ Cover letter / отклик (редактируйте markdown)"
-            value={data.cover_letter_md}
-            onChange={(v) => setData({ ...data, cover_letter_md: v })}
+            label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
+            value={data.cover_letter}
+            onChange={(v) => setData({ ...data, cover_letter: v })}
             minHeight={200}
           />
           <button

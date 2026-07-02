@@ -20,7 +20,7 @@ export interface Application {
 export interface ApplicationDetail extends Application {
   vacancy_text: string;
   cv_markdown: string;
-  cover_letter_md: string;
+  cover_letter: string;
   last_click_at: string | null;
 }
 
@@ -40,7 +40,7 @@ export async function generateCV(
     vacancy_text: string;
     selected_projects: string[];
   }
-): Promise<{ cv_markdown: string; cover_letter_md: string }> {
+): Promise<{ cv_markdown: string; cover_letter: string }> {
   const res = await fetch(`${API}/admin/applications/generate`, {
     method: "POST",
     headers: authHeaders(token),
@@ -57,7 +57,7 @@ export async function createApplication(
     company: string;
     role: string;
     vacancy_text: string;
-    cover_letter_md: string;
+    cover_letter: string;
     cv_markdown: string;
     slug: string;
     status: string;
@@ -86,7 +86,7 @@ export async function getApplication(
 export async function updateApplication(
   token: string,
   id: string,
-  data: { cover_letter_md?: string; cv_markdown?: string; status?: string }
+  data: { cover_letter?: string; cv_markdown?: string; status?: string }
 ): Promise<void> {
   const res = await fetch(`${API}/admin/applications/${id}`, {
     method: "PATCH",
