@@ -80,6 +80,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
         deadline: data.deadline ?? undefined,
         expected_term: data.expected_term ?? undefined,
         rating: data.rating ?? undefined,
+        spec_text: data.spec_text ?? undefined,
       });
       setMsg("✓ Детали сохранены");
       setDirty(false);
@@ -429,6 +430,20 @@ export default function ApplicationDetail({ id }: { id: string }) {
                 setDirty(true);
               }}
               placeholder="2 недели"
+            />
+          </div>
+
+          {/* ТЗ заказа */}
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">ТЗ заказа (текст)</label>
+            <textarea
+              value={data.spec_text ?? ""}
+              onChange={(e) => {
+                setData({ ...data, spec_text: e.target.value });
+                setDirty(true);
+              }}
+              placeholder="Текст ТЗ (если есть)..."
+              className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[120px] resize-y"
             />
           </div>
 

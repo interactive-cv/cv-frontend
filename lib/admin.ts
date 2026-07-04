@@ -24,6 +24,7 @@ export interface Application {
   deadline: string | null;
   expected_term: string | null;
   rating: number | null;
+  spec_text: string | null;
   created_at: string;
   published_at: string | null;
 }
@@ -52,6 +53,7 @@ export interface ApplicationInput {
   deadline?: string;
   expected_term?: string;
   rating?: number;
+  spec_text?: string;
 }
 
 /** Поля отклика, которые можно обновить через PATCH. */
@@ -67,6 +69,7 @@ export interface ApplicationUpdate {
   deadline?: string;
   expected_term?: string;
   rating?: number;
+  spec_text?: string;
 }
 
 /** Список откликов с inline-аналитикой. */
@@ -85,6 +88,7 @@ export async function generateCV(
     vacancy_text: string;
     selected_projects: string[];
     kind?: ApplicationKind;
+    spec_text?: string;
   }
 ): Promise<{ cv_markdown: string; cover_letter: string }> {
   const res = await fetch(`${API}/api/admin/applications/generate`, {
@@ -163,6 +167,22 @@ export async function deleteApplication(token: string, id: string): Promise<void
     headers: authHeaders(token),
   });
   if (!res.ok) throw new Error(`${res.status}`);
+}
+
+/** Загрузка ТЗ в PDF → извлечение текста (pypdf на бэкенде). */
+export async function uploadSpecPdf(
+  token: string,
+  file: File
+): Promise<{ spec_text: string; pages: number; filename: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API}/api/admin/applications/upload-spec`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
 }
 
 // ===== Settings: редактируемые тексты (мастер-CV, README, промпты) =====

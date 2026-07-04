@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { generateCV, createApplication, type ApplicationKind } from "@/lib/admin";
+import { generateCV, createApplication, uploadSpecPdf, type ApplicationKind } from "@/lib/admin";
 import { getProjects } from "@/lib/api";
 import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
@@ -34,11 +34,34 @@ export default function NewApplication() {
   const [expectedTerm, setExpectedTerm] = useState("");
   const [rating, setRating] = useState(0);
 
+  // ТЗ заказа (из PDF или вставленное вручную)
+  const [specText, setSpecText] = useState("");
+  const [specLoading, setSpecLoading] = useState(false);
+  const [specError, setSpecError] = useState("");
+
   // Результат генерации
   const [cvMarkdown, setCvMarkdown] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
 
   const isFreelance = kind === "freelance";
+
+  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    setSpecLoading(true);
+    setSpecError("");
+    try {
+      const result = await uploadSpecPdf(token, file);
+      setSpecText(result.spec_text);
+    } catch (err) {
+      setSpecError(`Ошибка загрузки PDF: ${(err as Error).message}`);
+    } finally {
+      setSpecLoading(false);
+      e.target.value = ""; // сбросить input чтобы можно было загрузить тот же файл снова
+    }
+  }
 
   useEffect(() => {
     getProjects()
@@ -68,6 +91,7 @@ export default function NewApplication() {
         vacancy_text: vacancyText,
         selected_projects: selectedProjects,
         kind,
+        spec_text: specText || undefined,
       });
       setCvMarkdown(result.cv_markdown);
       setCoverLetter(result.cover_letter);
@@ -107,6 +131,7 @@ export default function NewApplication() {
         deadline: deadline || undefined,
         expected_term: expectedTerm || undefined,
         rating: rating || undefined,
+        spec_text: specText || undefined,
       });
       router.push(`/admin/${result.id}`);
     } catch (e) {
@@ -175,6 +200,42 @@ export default function NewApplication() {
             placeholder={isFreelance ? "Вставьте описание фриланс-заказа..." : "Вставьте текст вакансии..."}
             className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[200px] resize-y"
           />
+
+          {/* ТЗ заказа (PDF + textarea) */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm text-gray-400">
+                ТЗ заказа {isFreelance ? "(повысит релевантность отклика)" : "(необязательно)"}
+              </span>
+              <label className="text-xs px-2.5 py-1 rounded-lg border bg-gray-800 border-gray-700 text-gray-400 hover:text-white cursor-pointer transition-colors">
+                📎 Загрузить PDF
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePdfUpload}
+                  className="hidden"
+                  disabled={specLoading}
+                />
+              </label>
+            </div>
+            {specLoading && (
+              <p className="text-xs text-blue-400 mb-2">Извлечение текста из PDF...</p>
+            )}
+            {specError && (
+              <p className="text-xs text-red-400 mb-2">{specError}</p>
+            )}
+            {specText && (
+              <div className="text-xs text-gray-500 mb-1">
+                ✓ ТЗ загружено ({specText.length} символов). Можно отредактировать:
+              </div>
+            )}
+            <textarea
+              value={specText}
+              onChange={(e) => setSpecText(e.target.value)}
+              placeholder="Вставьте текст ТЗ вручную или загрузите PDF выше..."
+              className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px] resize-y"
+            />
+          </div>
 
           {/* Ссылки (общие) */}
           <div className="grid grid-cols-2 gap-3">
