@@ -69,6 +69,7 @@ export default function SettingsPage() {
   const [savingKey, setSavingKey] = useState<SectionKey | null>(null);
   const [msgKey, setMsgKey] = useState<SectionKey | null>(null);
   const [msg, setMsg] = useState("");
+  const [activeTab, setActiveTab] = useState<"cv" | "readme" | "prompts">("cv");
 
   // AI-правка мастер-CV
   const [aiInstruction, setAiInstruction] = useState("");
@@ -180,125 +181,153 @@ export default function SettingsPage() {
   if (error && !data) return <p className="text-red-400">Ошибка: {error}</p>;
   if (!data) return null;
 
-  const sections: SectionKey[] = [
-    "master_cv",
-    "readme",
+  // Табы для разбиения длинной страницы.
+  type Tab = "cv" | "readme" | "prompts";
+  const tabs: { id: Tab; label: string }[] = [
+    { id: "cv", label: "📄 Мастер-CV" },
+    { id: "readme", label: "📖 README" },
+    { id: "prompts", label: "⚡ Промпты" },
+  ];
+  const promptKeys: SectionKey[] = [
     "prompt_chat",
     "prompt_generate",
     "prompt_generate_freelance",
     "prompt_cv_edit",
   ];
 
+  function renderSection(key: SectionKey) {
+    if (!data) return null;
+    const meta = SECTION_META[key];
+    const isDirty = dirty.has(key);
+    const isSaving = savingKey === key;
+    const isMsg = msgKey === key;
+    return (
+      <div key={key} className="bg-gray-900/50 rounded-xl p-4 border border-gray-800">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold">
+            {meta.icon} {meta.title}
+            {isDirty && <span className="text-amber-400 ml-2">●</span>}
+          </h2>
+          {isMsg && <span className="text-green-400 text-xs">{msg}</span>}
+        </div>
+        <p className="text-xs text-gray-500 mb-3">{meta.hint}</p>
+
+        <SplitEditor
+          label=""
+          value={data[key].value}
+          onChange={(v) => onChange(key, v)}
+          minHeight={meta.height}
+        />
+
+        <div className="flex gap-2 mt-3">
+          <button
+            onClick={() => saveKey(key)}
+            disabled={isSaving || !isDirty}
+            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            {isSaving ? "Сохранение..." : "Сохранить"}
+          </button>
+          {key === "readme" && (
+            <button
+              onClick={() => copyToClipboard(key)}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm transition-colors"
+            >
+              📋 Скопировать
+            </button>
+          )}
+        </div>
+
+        {/* AI-правка только для мастер-CV */}
+        {key === "master_cv" && (
+          <div className="mt-4 pt-4 border-t border-gray-800">
+            <h3 className="text-sm font-semibold mb-2">🤖 AI-правка</h3>
+            <p className="text-xs text-gray-500 mb-2">
+              Опишите, что изменить в CV. LLM вернёт предпросмотр —
+              примените, если устроит.
+            </p>
+            <textarea
+              value={aiInstruction}
+              onChange={(e) => setAiInstruction(e.target.value)}
+              placeholder="Например: добавь проект «Банк X» с ролями backend и DevOps"
+              className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[60px] resize-y mb-2"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleAiPreview}
+                disabled={aiLoading || !aiInstruction.trim()}
+                className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              >
+                {aiLoading ? "Думаю..." : "🔍 Предпросмотр"}
+              </button>
+              {aiPreview && (
+                <button
+                  onClick={handleAiApply}
+                  disabled={aiLoading}
+                  className="bg-green-600 hover:bg-green-500 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                >
+                  ✓ Применить
+                </button>
+              )}
+              {aiPreview && (
+                <button
+                  onClick={() => setAiPreview("")}
+                  className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-2 rounded-lg text-sm transition-colors"
+                >
+                  Отменить
+                </button>
+              )}
+            </div>
+            {aiError && <p className="text-red-400 text-xs mt-2">{aiError}</p>}
+            {aiLoading && (
+              <div className="mt-3 flex items-center gap-3">
+                <TypingIndicator />
+                <span className="text-gray-500 text-sm">AI редактирует CV...</span>
+              </div>
+            )}
+            {aiPreview && !aiLoading && (
+              <div className="mt-3 bg-gray-950 rounded-lg p-3 border border-purple-900/50 max-h-[400px] overflow-auto">
+                <div className="text-xs text-purple-400 mb-2">
+                  📋 Предпросмотр (не сохранено):
+                </div>
+                <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
+                  {aiPreview}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-4xl">
+    <div className="w-full max-w-none">
       <h1 className="text-xl font-bold mb-6">⚙ Настройки</h1>
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
-      <div className="grid gap-6">
-        {sections.map((key) => {
-          const meta = SECTION_META[key];
-          const isDirty = dirty.has(key);
-          const isSaving = savingKey === key;
-          const isMsg = msgKey === key;
-          return (
-            <div key={key} className="bg-gray-900/50 rounded-xl p-4 border border-gray-800">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-sm font-semibold">
-                  {meta.icon} {meta.title}
-                  {isDirty && <span className="text-amber-400 ml-2">●</span>}
-                </h2>
-                {isMsg && <span className="text-green-400 text-xs">{msg}</span>}
-              </div>
-              <p className="text-xs text-gray-500 mb-3">{meta.hint}</p>
-
-              <SplitEditor
-                label=""
-                value={data[key].value}
-                onChange={(v) => onChange(key, v)}
-                minHeight={meta.height}
-              />
-
-              <div className="flex gap-2 mt-3">
-                <button
-                  onClick={() => saveKey(key)}
-                  disabled={isSaving || !isDirty}
-                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  {isSaving ? "Сохранение..." : "Сохранить"}
-                </button>
-                {key === "readme" && (
-                  <button
-                    onClick={() => copyToClipboard(key)}
-                    className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-2 rounded-lg text-sm transition-colors"
-                  >
-                    📋 Скопировать
-                  </button>
-                )}
-              </div>
-
-              {/* AI-правка только для мастер-CV */}
-              {key === "master_cv" && (
-                <div className="mt-4 pt-4 border-t border-gray-800">
-                  <h3 className="text-sm font-semibold mb-2">🤖 AI-правка</h3>
-                  <p className="text-xs text-gray-500 mb-2">
-                    Опишите, что изменить в CV. LLM вернёт предпросмотр —
-                    примените, если устроит.
-                  </p>
-                  <textarea
-                    value={aiInstruction}
-                    onChange={(e) => setAiInstruction(e.target.value)}
-                    placeholder="Например: добавь проект «Банк X» с ролями backend и DevOps"
-                    className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[60px] resize-y mb-2"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handleAiPreview}
-                      disabled={aiLoading || !aiInstruction.trim()}
-                      className="bg-purple-600 hover:bg-purple-500 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                    >
-                      {aiLoading ? "Думаю..." : "🔍 Предпросмотр"}
-                    </button>
-                    {aiPreview && (
-                      <button
-                        onClick={handleAiApply}
-                        disabled={aiLoading}
-                        className="bg-green-600 hover:bg-green-500 disabled:opacity-40 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-                      >
-                        ✓ Применить
-                      </button>
-                    )}
-                    {aiPreview && (
-                      <button
-                        onClick={() => setAiPreview("")}
-                        className="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-2 rounded-lg text-sm transition-colors"
-                      >
-                        Отменить
-                      </button>
-                    )}
-                  </div>
-                  {aiError && <p className="text-red-400 text-xs mt-2">{aiError}</p>}
-                  {aiLoading && (
-                    <div className="mt-3 flex items-center gap-3">
-                      <TypingIndicator />
-                      <span className="text-gray-500 text-sm">AI редактирует CV...</span>
-                    </div>
-                  )}
-                  {aiPreview && !aiLoading && (
-                    <div className="mt-3 bg-gray-950 rounded-lg p-3 border border-purple-900/50 max-h-[400px] overflow-auto">
-                      <div className="text-xs text-purple-400 mb-2">
-                        📋 Предпросмотр (не сохранено):
-                      </div>
-                      <pre className="text-xs text-gray-300 whitespace-pre-wrap font-mono">
-                        {aiPreview}
-                      </pre>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          );
-        })}
+      {/* Табы */}
+      <div className="flex gap-1 border-b border-gray-800 mb-4">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
+            className={`px-4 py-2 text-sm transition-colors border-b-2 ${
+              activeTab === t.id
+                ? "text-white border-blue-500"
+                : "text-gray-500 border-transparent hover:text-white"
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
+
+      {/* Контент по табам */}
+      {activeTab === "cv" && <div className="grid gap-6">{renderSection("master_cv")}</div>}
+      {activeTab === "readme" && <div className="grid gap-6">{renderSection("readme")}</div>}
+      {activeTab === "prompts" && (
+        <div className="grid gap-6">{promptKeys.map((k) => renderSection(k))}</div>
+      )}
     </div>
   );
 }
