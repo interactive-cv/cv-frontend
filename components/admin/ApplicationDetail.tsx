@@ -153,6 +153,33 @@ export default function ApplicationDetail({ id }: { id: string }) {
     setTimeout(() => setMsg(""), 2000);
   }
 
+  async function downloadPdf() {
+    if (!data) return;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    try {
+      const res = await fetch(`${API}/api/admin/applications/${id}/pdf`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const fname = data?.company
+        ? `CV_${data.company}_${data.role}.pdf`
+        : `CV_${data.role}.pdf`;
+      a.download = fname.replace(/[/\\]/g, "-").replace(/\s+/g, "_");
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setMsg(`Ошибка PDF: ${(e as Error).message}`);
+    }
+  }
+
   function setRating(r: number) {
     if (!data) return;
     setData({ ...data, rating: r === data.rating ? 0 : r });
@@ -225,6 +252,12 @@ export default function ApplicationDetail({ id }: { id: string }) {
             className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
           >
             ← Отменить
+          </button>
+          <button
+            onClick={downloadPdf}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
+          >
+            📄 Скачать PDF
           </button>
           {data.short_link_code && (
             <button
