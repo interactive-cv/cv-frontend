@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { listApplications, type Application } from "@/lib/admin";
+import { listApplications, type Application, type ApplicationKind } from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
 
 const STATUS_CONFIG: Record<string, { color: string; dot: string; label: string }> = {
@@ -11,10 +11,18 @@ const STATUS_CONFIG: Record<string, { color: string; dot: string; label: string 
   archived: { color: "#6b7280", dot: "●", label: "archived" },
 };
 
+const KIND_BADGE: Record<string, string> = {
+  vacancy: "💼",
+  freelance: "🚀",
+};
+
+type Filter = "all" | ApplicationKind;
+
 export default function ApplicationList() {
   const [items, setItems] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -28,24 +36,44 @@ export default function ApplicationList() {
   if (loading) return <p className="text-gray-500">Загрузка...</p>;
   if (error) return <p className="text-red-400">Ошибка: {error}</p>;
 
+  const filtered = filter === "all" ? items : items.filter((a) => a.kind === filter);
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold">Отклики ({items.length})</h1>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <h1 className="text-xl font-bold">Отклики ({filtered.length})</h1>
+        {/* Фильтр по типу */}
+        <div className="flex gap-1 bg-gray-900 rounded-lg p-1">
+          {(["all", "vacancy", "freelance"] as Filter[]).map((f) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                filter === f
+                  ? "bg-gray-700 text-white"
+                  : "text-gray-400 hover:text-white"
+              }`}
+            >
+              {f === "all" ? "Все" : KIND_BADGE[f]}{" "}
+              {f === "all" ? "" : f === "vacancy" ? "Вакансии" : "Фриланс"}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {items.length === 0 ? (
+      {filtered.length === 0 ? (
         <p className="text-gray-500">
-          Пока нет откликов.{" "}
+          {items.length === 0 ? "Пока нет откликов. " : "Нет откликов этого типа. "}
           <Link href="/admin/new" className="text-blue-400 underline">
             Создайте первый
           </Link>
         </p>
       ) : (
         <div className="grid gap-3">
-          {items.map((app) => {
+          {filtered.map((app) => {
             const cfg = STATUS_CONFIG[app.status] ?? STATUS_CONFIG.draft;
-            const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+            const isFreelance = app.kind === "freelance";
             return (
               <Link
                 key={app.id}
@@ -56,7 +84,7 @@ export default function ApplicationList() {
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="font-semibold text-base">
-                      {app.company} — {app.role}
+                      {KIND_BADGE[app.kind] ?? "📋"} {app.company} — {app.role}
                     </div>
                     <div className="text-gray-500 text-xs mt-0.5">
                       {app.published_at
@@ -64,12 +92,34 @@ export default function ApplicationList() {
                         : `Создан: ${new Date(app.created_at).toLocaleDateString("ru-RU")}`}
                     </div>
                   </div>
-                  <span style={{ color: cfg.color }} className="text-xs font-medium">
-                    {cfg.dot} {cfg.label}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {app.rating ? (
+                      <span className="text-amber-400 text-xs">
+                        {"★".repeat(app.rating)}
+                      </span>
+                    ) : null}
+                    <span style={{ color: cfg.color }} className="text-xs font-medium">
+                      {cfg.dot} {cfg.label}
+                    </span>
+                  </div>
                 </div>
-                {/* inline-аналитика */}
-                <div className="flex gap-5 mt-3 text-xs text-gray-400">
+                {/* inline-аналитика + freelance-поля */}
+                <div className="flex gap-5 mt-3 text-xs text-gray-400 flex-wrap">
+                  {isFreelance && app.budget && (
+                    <span>
+                      💰 <strong className="text-gray-200">{app.budget}</strong>
+                    </span>
+                  )}
+                  {isFreelance && app.deadline && (
+                    <span>
+                      📅 до {new Date(app.deadline).toLocaleDateString("ru-RU")}
+                    </span>
+                  )}
+                  {isFreelance && app.applicant_count != null && (
+                    <span>
+                      👥 конкурс: <strong className="text-gray-200">{app.applicant_count}</strong>
+                    </span>
+                  )}
                   {app.short_link_code && (
                     <span>
                       🔗 {siteUrl.replace(/^https?:\/\//, "")}/

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { generateCV, createApplication } from "@/lib/admin";
+import { generateCV, createApplication, type ApplicationKind } from "@/lib/admin";
 import { getProjects } from "@/lib/api";
 import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
@@ -15,6 +15,9 @@ export default function NewApplication() {
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState("");
 
+  // Тип отклика
+  const [kind, setKind] = useState<ApplicationKind>("vacancy");
+
   // Форма
   const [company, setCompany] = useState("");
   const [role, setRole] = useState("");
@@ -22,9 +25,20 @@ export default function NewApplication() {
   const [projects, setProjects] = useState<{ title: string }[]>([]);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
 
+  // Дополнительные поля (ссылки, бюджет, рейтинг и т.д.)
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [chatUrl, setChatUrl] = useState("");
+  const [budget, setBudget] = useState("");
+  const [applicantCount, setApplicantCount] = useState("");
+  const [deadline, setDeadline] = useState("");
+  const [expectedTerm, setExpectedTerm] = useState("");
+  const [rating, setRating] = useState(0);
+
   // Результат генерации
   const [cvMarkdown, setCvMarkdown] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
+
+  const isFreelance = kind === "freelance";
 
   useEffect(() => {
     getProjects()
@@ -40,7 +54,7 @@ export default function NewApplication() {
 
   async function handleGenerate() {
     if (!company.trim() || !role.trim() || !vacancyText.trim()) {
-      setError("Заполните компанию, роль и текст вакансии");
+      setError("Заполните обязательные поля");
       return;
     }
     setError("");
@@ -53,6 +67,7 @@ export default function NewApplication() {
         role,
         vacancy_text: vacancyText,
         selected_projects: selectedProjects,
+        kind,
       });
       setCvMarkdown(result.cv_markdown);
       setCoverLetter(result.cover_letter);
@@ -67,8 +82,6 @@ export default function NewApplication() {
     setError("");
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
-    // Slug = company-role + короткий случайный суффикс, чтобы гарантировать
-    // уникальность даже при повторных откликах в ту же компанию/роль.
     const base = `${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${role
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")}`.replace(/^-|-$/g, "");
@@ -83,10 +96,15 @@ export default function NewApplication() {
         cv_markdown: cvMarkdown,
         slug,
         status,
+        kind,
+        source_url: sourceUrl || undefined,
+        chat_url: chatUrl || undefined,
+        budget: budget || undefined,
+        applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
+        deadline: deadline || undefined,
+        expected_term: expectedTerm || undefined,
+        rating: rating || undefined,
       });
-      // Публикация (короткая ссылка + замена {CV_LINK}) происходит в самом
-      // createApplication на бэкенде, когда status=active. Дополнительно
-      // вызывать /publish не нужно — это создало бы дубликат ShortLink.
       router.push(`/admin/${result.id}`);
     } catch (e) {
       setError(`Ошибка сохранения: ${(e as Error).message}`);
@@ -94,8 +112,6 @@ export default function NewApplication() {
   }
 
   function handleCancel() {
-    // В фазе edit теряем сгенерированные CV/отклик (стоит денег на LLM) —
-    // предупреждаем строже. В фазе form — только введённый текст вакансии.
     const msg =
       phase === "edit"
         ? "Отменить создание отклика?\n\nСгенерированные CV и отклик будут потеряны."
@@ -112,26 +128,113 @@ export default function NewApplication() {
         <h1 className="text-xl font-bold mb-6">Новый отклик</h1>
         {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
         <div className="grid gap-4">
+          {/* Селектор типа */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setKind("vacancy")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                kind === "vacancy"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:text-white"
+              }`}
+            >
+              💼 Вакансия
+            </button>
+            <button
+              onClick={() => setKind("freelance")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                kind === "freelance"
+                  ? "bg-purple-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:text-white"
+              }`}
+            >
+              🚀 Фриланс
+            </button>
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <input
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              placeholder="Компания (Yandex)"
+              placeholder={isFreelance ? "Заказчик" : "Компания (Yandex)"}
               className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <input
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              placeholder="Роль (Flutter Developer)"
+              placeholder={isFreelance ? "Проект (Flutter app)" : "Роль (Flutter Developer)"}
               className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
           <textarea
             value={vacancyText}
             onChange={(e) => setVacancyText(e.target.value)}
-            placeholder="Вставьте текст вакансии..."
+            placeholder={isFreelance ? "Вставьте описание фриланс-заказа..." : "Вставьте текст вакансии..."}
             className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[200px] resize-y"
           />
+
+          {/* Ссылки (общие) */}
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder={isFreelance ? "Ссылка на проект (FL.ru)" : "Ссылка на вакансию"}
+              className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <input
+              value={chatUrl}
+              onChange={(e) => setChatUrl(e.target.value)}
+              placeholder={isFreelance ? "Ссылка на чат с заказчиком" : "Ссылка на диалог с HR"}
+              className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Поля фриланс-заказа */}
+          {isFreelance && (
+            <div className="grid grid-cols-2 gap-3">
+              <input
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                placeholder="Бюджет (50 000 ₽)"
+                className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <input
+                value={applicantCount}
+                onChange={(e) => setApplicantCount(e.target.value)}
+                type="number"
+                placeholder="Конкурс (откликнулись)"
+                className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <input
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                type="date"
+                placeholder="Срок сдачи"
+                className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              <input
+                value={expectedTerm}
+                onChange={(e) => setExpectedTerm(e.target.value)}
+                placeholder="Ожидаемый срок (2 недели)"
+                className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+            </div>
+          )}
+
+          {/* Рейтинг */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-400">Рейтинг:</span>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setRating(rating === star ? 0 : star)}
+                className={`text-lg ${star <= rating ? "text-amber-400" : "text-gray-600"} hover:text-amber-300`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+
           {/* Чекбоксы проектов */}
           <div>
             <div className="text-sm text-gray-400 mb-2">
@@ -180,7 +283,9 @@ export default function NewApplication() {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <TypingIndicator />
-        <p className="text-gray-400 text-sm">AI генерирует CV и отклик...</p>
+        <p className="text-gray-400 text-sm">
+          {isFreelance ? "AI генерирует отклик на фриланс-заказ..." : "AI генерирует CV и отклик..."}
+        </p>
       </div>
     );
   }

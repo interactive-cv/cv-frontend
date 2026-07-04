@@ -2,17 +2,28 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getApplication, updateApplication, publishApplication, archiveApplication } from "@/lib/admin";
-import type { ApplicationDetail } from "@/lib/admin";
+import {
+  archiveApplication,
+  getApplication,
+  publishApplication,
+  updateApplication,
+  type ApplicationDetail,
+  type ApplicationKind,
+} from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
 
-type Tab = "cv" | "cover" | "vacancy" | "analytics";
+type Tab = "cv" | "cover" | "vacancy" | "details" | "analytics";
 
 const STATUS_DOT: Record<string, string> = {
   active: "#22c55e",
   draft: "#f59e0b",
   archived: "#6b7280",
+};
+
+const KIND_LABEL: Record<string, string> = {
+  vacancy: "💼 Вакансия",
+  freelance: "🚀 Фриланс",
 };
 
 export default function ApplicationDetail({ id }: { id: string }) {
@@ -22,8 +33,6 @@ export default function ApplicationDetail({ id }: { id: string }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
-
-  // Отслеживаем, были ли несохранённые правки (для подтверждения отмены).
   const [dirty, setDirty] = useState(false);
 
   useEffect(() => {
@@ -55,14 +64,35 @@ export default function ApplicationDetail({ id }: { id: string }) {
     }
   }
 
+  async function saveDetails() {
+    if (!data) return;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    setSaving(true);
+    try {
+      await updateApplication(token, id, {
+        kind: data.kind,
+        source_url: data.source_url ?? undefined,
+        chat_url: data.chat_url ?? undefined,
+        budget: data.budget ?? undefined,
+        applicant_count: data.applicant_count ?? undefined,
+        deadline: data.deadline ?? undefined,
+        expected_term: data.expected_term ?? undefined,
+        rating: data.rating ?? undefined,
+      });
+      setMsg("✓ Детали сохранены");
+      setDirty(false);
+      setTimeout(() => setMsg(""), 2000);
+    } catch {
+      setMsg("Ошибка сохранения");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function handleCancel() {
-    // Если были правки — предупреждаем об их потере. Если нет — просто уходим.
     if (dirty) {
-      if (
-        !window.confirm(
-          "Отменить редактирование?\n\nНесохранённые правки будут потеряны."
-        )
-      ) {
+      if (!window.confirm("Отменить редактирование?\n\nНесохранённые правки будут потеряны.")) {
         return;
       }
     }
@@ -101,29 +131,73 @@ export default function ApplicationDetail({ id }: { id: string }) {
     setTimeout(() => setMsg(""), 2000);
   }
 
+  function setRating(r: number) {
+    if (!data) return;
+    setData({ ...data, rating: r === data.rating ? 0 : r });
+    setDirty(true);
+  }
+
   if (loading) return <p className="text-gray-500">Загрузка...</p>;
   if (!data) return <p className="text-red-400">{msg || "Не найдено"}</p>;
+
+  const isFreelance = data.kind === "freelance";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com";
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "cv", label: "📄 CV" },
     { id: "cover", label: "✉ Отклик" },
-    { id: "vacancy", label: "📋 Вакансия" },
+    { id: "vacancy", label: isFreelance ? "📋 Заказ" : "📋 Вакансия" },
+    { id: "details", label: "⚙ Детали" },
     { id: "analytics", label: "📊 Аналитика" },
   ];
 
   return (
     <div>
       {/* Шапка */}
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex justify-between items-start mb-4 gap-4 flex-wrap">
         <div>
           <h1 className="text-xl font-bold">
             {data.company} — {data.role}
           </h1>
-          <span style={{ color: STATUS_DOT[data.status] }} className="text-xs">
-            ● {data.status}
-          </span>
+          <div className="flex items-center gap-3 mt-1">
+            <span style={{ color: STATUS_DOT[data.status] }} className="text-xs">
+              ● {data.status}
+            </span>
+            <span className="text-xs text-gray-400">{KIND_LABEL[data.kind] ?? data.kind}</span>
+            {data.rating ? (
+              <span className="text-xs text-amber-400">
+                {"★".repeat(data.rating)}
+                <span className="text-gray-600">{"★".repeat(5 - data.rating)}</span>
+              </span>
+            ) : null}
+          </div>
+          {/* Кликабельные ссылки */}
+          {(data.source_url || data.chat_url) && (
+            <div className="flex gap-3 mt-2">
+              {data.source_url && (
+                <a
+                  href={data.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 text-xs underline"
+                >
+                  📄 {isFreelance ? "Проект" : "Вакансия"}
+                </a>
+              )}
+              {data.chat_url && (
+                <a
+                  href={data.chat_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-400 hover:text-blue-300 text-xs underline"
+                >
+                  💬 {isFreelance ? "Заказчик" : "HR"}
+                </a>
+              )}
+            </div>
+          )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={handleCancel}
             className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
@@ -160,7 +234,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
       {msg && <p className="text-sm text-blue-400 mb-3">{msg}</p>}
 
       {/* Табы */}
-      <div className="flex gap-1 border-b border-gray-800 mb-4">
+      <div className="flex gap-1 border-b border-gray-800 mb-4 flex-wrap">
         {tabs.map((t) => (
           <button
             key={t.id}
@@ -220,12 +294,12 @@ export default function ApplicationDetail({ id }: { id: string }) {
             <div className="mt-4 bg-gray-900 rounded-lg p-3 border border-gray-800">
               <div className="text-xs text-gray-500 mb-1">🔗 Ссылка на это CV (вставлена в cover letter):</div>
               <a
-                href={`${process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com"}/${data.short_link_code}`}
+                href={`${siteUrl}/${data.short_link_code}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-400 hover:text-blue-300 underline text-sm break-all"
               >
-                {process.env.NEXT_PUBLIC_SITE_URL?.replace(/^https?:\/\//, "") ?? "cv.example.com"}/{data.short_link_code}
+                {siteUrl.replace(/^https?:\/\//, "")}/{data.short_link_code}
               </a>
             </div>
           )}
@@ -239,6 +313,124 @@ export default function ApplicationDetail({ id }: { id: string }) {
         <pre className="bg-gray-900 rounded-lg p-4 text-sm whitespace-pre-wrap font-sans text-gray-300 min-h-[200px]">
           {data.vacancy_text}
         </pre>
+      )}
+
+      {tab === "details" && (
+        <div className="grid gap-4 max-w-xl">
+          {/* Тип */}
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Тип отклика</label>
+            <div className="flex gap-2">
+              {(["vacancy", "freelance"] as ApplicationKind[]).map((k) => (
+                <button
+                  key={k}
+                  onClick={() => {
+                    setData({ ...data, kind: k });
+                    setDirty(true);
+                  }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                    data.kind === k
+                      ? k === "freelance"
+                        ? "bg-purple-600 text-white"
+                        : "bg-blue-600 text-white"
+                      : "bg-gray-800 text-gray-400 hover:text-white"
+                  }`}
+                >
+                  {KIND_LABEL[k]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Ссылки */}
+          <div className="grid grid-cols-1 gap-3">
+            <Field
+              label="Ссылка на вакансию/проект"
+              value={data.source_url ?? ""}
+              onChange={(v) => {
+                setData({ ...data, source_url: v });
+                setDirty(true);
+              }}
+              placeholder="https://..."
+            />
+            <Field
+              label="Ссылка на диалог с HR/заказчиком"
+              value={data.chat_url ?? ""}
+              onChange={(v) => {
+                setData({ ...data, chat_url: v });
+                setDirty(true);
+              }}
+              placeholder="https://..."
+            />
+          </div>
+
+          {/* Поля фриланс-заказа */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label="Бюджет"
+              value={data.budget ?? ""}
+              onChange={(v) => {
+                setData({ ...data, budget: v });
+                setDirty(true);
+              }}
+              placeholder="50 000 ₽"
+            />
+            <Field
+              label="Конкурс (откликнулись)"
+              value={data.applicant_count?.toString() ?? ""}
+              onChange={(v) => {
+                setData({ ...data, applicant_count: v ? parseInt(v, 10) : null });
+                setDirty(true);
+              }}
+              placeholder="12"
+              type="number"
+            />
+            <Field
+              label="Срок сдачи"
+              value={data.deadline ? data.deadline.slice(0, 10) : ""}
+              onChange={(v) => {
+                setData({ ...data, deadline: v || null });
+                setDirty(true);
+              }}
+              type="date"
+            />
+            <Field
+              label="Ожидаемый срок сотрудничества"
+              value={data.expected_term ?? ""}
+              onChange={(v) => {
+                setData({ ...data, expected_term: v });
+                setDirty(true);
+              }}
+              placeholder="2 недели"
+            />
+          </div>
+
+          {/* Рейтинг */}
+          <div>
+            <label className="text-xs text-gray-500 block mb-1">Рейтинг</label>
+            <div className="flex gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  onClick={() => setRating(star)}
+                  className={`text-2xl ${
+                    star <= (data.rating ?? 0) ? "text-amber-400" : "text-gray-600"
+                  } hover:text-amber-300`}
+                >
+                  ★
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={saveDetails}
+            disabled={saving || !dirty}
+            className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-fit"
+          >
+            {saving ? "Сохранение..." : "Сохранить детали"}
+          </button>
+        </div>
       )}
 
       {tab === "analytics" && (
@@ -263,13 +455,40 @@ export default function ApplicationDetail({ id }: { id: string }) {
           </div>
           {data.short_link_code && (
             <div className="bg-gray-900 rounded-lg p-3 text-sm text-gray-400">
-              🔗{" "}
-              {(process.env.NEXT_PUBLIC_SITE_URL ?? "").replace(/^https?:\/\//, "")}/
+              🔗 {siteUrl.replace(/^https?:\/\//, "")}/
               <strong className="text-gray-200">{data.short_link_code}</strong>
             </div>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Поле ввода с подписью. */
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+}) {
+  return (
+    <div>
+      <label className="text-xs text-gray-500 block mb-1">{label}</label>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+      />
     </div>
   );
 }

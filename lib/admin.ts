@@ -4,15 +4,26 @@ function authHeaders(token: string): HeadersInit {
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 
+export type ApplicationKind = "vacancy" | "freelance";
+
+/** Общие поля отклика (для списка и деталей). */
 export interface Application {
   id: string;
   company: string;
   role: string;
   slug: string;
   status: string;
+  kind: ApplicationKind;
   total_clicks: number;
   unique_clicks: number;
   short_link_code: string | null;
+  source_url: string | null;
+  chat_url: string | null;
+  budget: string | null;
+  applicant_count: number | null;
+  deadline: string | null;
+  expected_term: string | null;
+  rating: number | null;
   created_at: string;
   published_at: string | null;
 }
@@ -24,6 +35,40 @@ export interface ApplicationDetail extends Application {
   last_click_at: string | null;
 }
 
+/** Поля отклика, которые можно передать при создании. */
+export interface ApplicationInput {
+  company: string;
+  role: string;
+  vacancy_text: string;
+  cover_letter: string;
+  cv_markdown: string;
+  slug: string;
+  status: string;
+  kind?: ApplicationKind;
+  source_url?: string;
+  chat_url?: string;
+  budget?: string;
+  applicant_count?: number;
+  deadline?: string;
+  expected_term?: string;
+  rating?: number;
+}
+
+/** Поля отклика, которые можно обновить через PATCH. */
+export interface ApplicationUpdate {
+  cover_letter?: string;
+  cv_markdown?: string;
+  status?: string;
+  kind?: ApplicationKind;
+  source_url?: string;
+  chat_url?: string;
+  budget?: string;
+  applicant_count?: number;
+  deadline?: string;
+  expected_term?: string;
+  rating?: number;
+}
+
 /** Список откликов с inline-аналитикой. */
 export async function listApplications(token: string): Promise<Application[]> {
   const res = await fetch(`${API}/api/admin/applications`, { headers: authHeaders(token) });
@@ -31,7 +76,7 @@ export async function listApplications(token: string): Promise<Application[]> {
   return res.json();
 }
 
-/** AI-генерация CV + cover letter из вакансии. */
+/** AI-генерация CV + cover letter из вакансии или фриланс-заказа. */
 export async function generateCV(
   token: string,
   data: {
@@ -39,6 +84,7 @@ export async function generateCV(
     role: string;
     vacancy_text: string;
     selected_projects: string[];
+    kind?: ApplicationKind;
   }
 ): Promise<{ cv_markdown: string; cover_letter: string }> {
   const res = await fetch(`${API}/api/admin/applications/generate`, {
@@ -53,16 +99,8 @@ export async function generateCV(
 /** Создать отклик (после генерации/редактирования). */
 export async function createApplication(
   token: string,
-  data: {
-    company: string;
-    role: string;
-    vacancy_text: string;
-    cover_letter: string;
-    cv_markdown: string;
-    slug: string;
-    status: string;
-  }
-): Promise<{ id: string; slug: string }> {
+  data: ApplicationInput
+): Promise<{ id: string; slug: string; url?: string }> {
   const res = await fetch(`${API}/api/admin/applications`, {
     method: "POST",
     headers: authHeaders(token),
@@ -86,7 +124,7 @@ export async function getApplication(
 export async function updateApplication(
   token: string,
   id: string,
-  data: { cover_letter?: string; cv_markdown?: string; status?: string }
+  data: ApplicationUpdate
 ): Promise<void> {
   const res = await fetch(`${API}/api/admin/applications/${id}`, {
     method: "PATCH",
@@ -131,6 +169,7 @@ export interface Settings {
   readme: ConfigText;
   prompt_chat: ConfigText;
   prompt_generate: ConfigText;
+  prompt_generate_freelance: ConfigText;
   prompt_cv_edit: ConfigText;
 }
 
