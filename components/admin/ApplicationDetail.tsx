@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   archiveApplication,
+  deleteApplication,
   getApplication,
   publishApplication,
   updateApplication,
@@ -123,6 +124,26 @@ export default function ApplicationDetail({ id }: { id: string }) {
     }
   }
 
+  async function handleDelete() {
+    if (!data) return;
+    const name = `${data.company ?? data.role} — ${data.role}`;
+    if (
+      !window.confirm(
+        `Удалить отклик «${name}»?\n\nЭто действие НЕОБРАТИМО.\nБудут удалены: CV, cover letter, короткая ссылка, аналитика кликов, собеседования.`
+      )
+    ) {
+      return;
+    }
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      await deleteApplication(token, id);
+      router.push("/admin");
+    } catch {
+      setMsg("Ошибка удаления");
+    }
+  }
+
   function copyLink() {
     if (!data?.short_link_code) return;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com";
@@ -157,7 +178,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
       <div className="flex justify-between items-start mb-4 gap-4 flex-wrap">
         <div>
           <h1 className="text-xl font-bold">
-            {data.company} — {data.role}
+            {data.company ? `${data.company} — ` : ""}{data.role}
           </h1>
           <div className="flex items-center gap-3 mt-1">
             <span style={{ color: STATUS_DOT[data.status] }} className="text-xs">
@@ -228,6 +249,12 @@ export default function ApplicationDetail({ id }: { id: string }) {
               📦 Архивировать
             </button>
           )}
+          <button
+            onClick={handleDelete}
+            className="bg-red-900/60 hover:bg-red-800 text-red-300 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
+          >
+            🗑 Удалить
+          </button>
         </div>
       </div>
 

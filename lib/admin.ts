@@ -156,6 +156,15 @@ export async function archiveApplication(token: string, id: string): Promise<voi
   if (!res.ok) throw new Error(`${res.status}`);
 }
 
+/** Полное удаление отклика со всеми артефактами. */
+export async function deleteApplication(token: string, id: string): Promise<void> {
+  const res = await fetch(`${API}/api/admin/applications/${id}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+}
+
 // ===== Settings: редактируемые тексты (мастер-CV, README, промпты) =====
 
 export interface ConfigText {

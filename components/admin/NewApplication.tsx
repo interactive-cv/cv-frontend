@@ -53,8 +53,8 @@ export default function NewApplication() {
   }
 
   async function handleGenerate() {
-    if (!company.trim() || !role.trim() || !vacancyText.trim()) {
-      setError("Заполните обязательные поля");
+    if (!role.trim() || !vacancyText.trim()) {
+      setError("Заполните роль/проект и текст вакансии/заказа");
       return;
     }
     setError("");
@@ -82,9 +82,12 @@ export default function NewApplication() {
     setError("");
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
-    const base = `${company.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${role
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")}`.replace(/^-|-$/g, "");
+    // Slug из company+role или только role (если company не указан).
+    const parts = [company, role]
+      .filter(Boolean)
+      .map((s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-"))
+      .join("-");
+    const base = parts.replace(/^-|-$/g, "");
     const suffix = Math.random().toString(36).slice(2, 6);
     const slug = `${base}-${suffix}`;
     try {
