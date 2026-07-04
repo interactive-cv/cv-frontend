@@ -12,7 +12,13 @@ import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
 import TypingIndicator from "@/components/chat/TypingIndicator";
 
-type SectionKey = "master_cv" | "readme" | "prompt_chat" | "prompt_generate" | "prompt_cv_edit";
+type SectionKey =
+  | "master_cv"
+  | "readme"
+  | "prompt_chat"
+  | "prompt_generate"
+  | "prompt_generate_freelance"
+  | "prompt_cv_edit";
 
 const SECTION_META: Record<
   SectionKey,
@@ -37,9 +43,15 @@ const SECTION_META: Record<
     height: 300,
   },
   prompt_generate: {
-    title: "Промпт генерации отклика",
+    title: "Промпт генерации отклика (вакансии)",
     icon: "⚡",
     hint: "Промпт для AI-генерации CV и cover letter из вакансии. Плейсхолдеры: {cv_markdown}, {vacancy_text}, {selected_projects}, {cv_link}.",
+    height: 350,
+  },
+  prompt_generate_freelance: {
+    title: "Промпт генерации отклика (фриланс)",
+    icon: "🚀",
+    hint: "Промпт для AI-генерации CV и cover letter для фриланс-заказов (FL.ru). Плейсхолдеры: {cv_markdown}, {vacancy_text}, {selected_projects}, {cv_link}.",
     height: 350,
   },
   prompt_cv_edit: {
@@ -173,6 +185,7 @@ export default function SettingsPage() {
     "readme",
     "prompt_chat",
     "prompt_generate",
+    "prompt_generate_freelance",
     "prompt_cv_edit",
   ];
 
