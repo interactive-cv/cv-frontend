@@ -117,3 +117,68 @@ export async function archiveApplication(token: string, id: string): Promise<voi
   });
   if (!res.ok) throw new Error(`${res.status}`);
 }
+
+// ===== Settings: редактируемые тексты (мастер-CV, README, промпты) =====
+
+export interface ConfigText {
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
+export interface Settings {
+  master_cv: ConfigText;
+  readme: ConfigText;
+  prompt_chat: ConfigText;
+  prompt_generate: ConfigText;
+  prompt_cv_edit: ConfigText;
+}
+
+/** Получить все настройки (5 ключей). */
+export async function getSettings(token: string): Promise<Settings> {
+  const res = await fetch(`${API}/api/admin/settings`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+/** Частичное обновление настроек. */
+export async function updateSettings(
+  token: string,
+  data: Partial<Record<keyof Settings, string>>
+): Promise<Settings> {
+  const res = await fetch(`${API}/api/admin/settings`, {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+/** AI-правка мастер-CV: предпросмотр (без сохранения). */
+export async function previewMasterCvEdit(
+  token: string,
+  instruction: string
+): Promise<{ preview_markdown: string }> {
+  const res = await fetch(`${API}/api/admin/settings/master-cv/preview`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ instruction }),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+/** Применить предпросмотр (или ручную правку) к мастер-CV. */
+export async function applyMasterCv(
+  token: string,
+  markdown: string
+): Promise<Settings> {
+  const res = await fetch(`${API}/api/admin/settings/master-cv/apply`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ markdown }),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
