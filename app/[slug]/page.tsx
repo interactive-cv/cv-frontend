@@ -43,7 +43,9 @@ export default async function Page({
   const { slug } = await params;
   const API = serverApiUrl();
 
-  // Короткая ссылка — резолвим и редиректим на реальный slug варианта.
+  // Короткая ссылка — middleware.ts уже отрезолвил её и вернул redirect
+  // с Set-Cookie (session_id). Если мы здесь — значит middleware не сработал
+  // (dev-режим без middleware), делаем fallback.
   if (SHORT_CODE_RE.test(slug)) {
     const res = await fetch(`${API}/api/links/resolve?code=${slug}`, { cache: "no-store" });
     if (res.status === 200) {
