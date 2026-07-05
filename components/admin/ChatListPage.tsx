@@ -1,7 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listChats, getChat, type ChatSessionBrief, type ChatSessionDetail } from "@/lib/admin";
+import {
+  listChats,
+  getChat,
+  type ChatSessionBrief,
+  type ChatSessionDetail,
+} from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
 
 export default function ChatListPage() {
@@ -38,40 +43,64 @@ export default function ChatListPage() {
   if (loading) return <p className="text-gray-500">Загрузка...</p>;
   if (error && !chats.length) return <p className="text-red-400">Ошибка: {error}</p>;
 
+  // Группировка: по short_link_code, отдельная группа «Главная страница» (без code).
+  const groups: Record<string, ChatSessionBrief[]> = {};
+  for (const c of chats) {
+    const key = c.short_link_code ?? "__main__";
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(c);
+  }
+
+  // Сортируем группы: главная страница вверху, потом по last_active
+  const sortedKeys = Object.keys(groups).sort((a, b) => {
+    if (a === "__main__") return -1;
+    if (b === "__main__") return 1;
+    const aLast = Math.max(...groups[a].map((c) => new Date(c.last_active_at).getTime()));
+    const bLast = Math.max(...groups[b].map((c) => new Date(c.last_active_at).getTime()));
+    return bLast - aLast;
+  });
+
+  function renderChatCard(c: ChatSessionBrief) {
+    return (
+      <button
+        key={c.id}
+        onClick={() => openChat(c.id)}
+        className={`text-left bg-gray-900 rounded-xl p-3 hover:bg-gray-800 transition-colors border w-full ${
+          selected?.id === c.id ? "border-blue-500" : "border-gray-800"
+        }`}
+      >
+        <div className="flex justify-between items-start">
+          <div className="flex items-center gap-2">
+            {c.is_admin && <span className="text-xs">👑</span>}
+            <span className="font-medium text-sm">{c.display_name}</span>
+          </div>
+          <span className="text-xs text-gray-400">{c.message_count} сообщ.</span>
+        </div>
+        <div className="text-gray-500 text-xs mt-1">
+          {new Date(c.last_active_at).toLocaleString("ru-RU")}
+        </div>
+      </button>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Список чатов */}
+      {/* Список чатов — сгруппированный */}
       <div>
         <h1 className="text-xl font-bold mb-4">💬 Чаты ({chats.length})</h1>
         {chats.length === 0 ? (
           <p className="text-gray-500">Пока нет диалогов.</p>
         ) : (
-          <div className="grid gap-2">
-            {chats.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => openChat(c.id)}
-                className={`text-left bg-gray-900 rounded-xl p-3 hover:bg-gray-800 transition-colors border ${
-                  selected?.id === c.id ? "border-blue-500" : "border-gray-800"
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-medium text-sm">
-                      {c.visitor_name || "Аноним"}
-                    </div>
-                    <div className="text-gray-500 text-xs mt-0.5">
-                      {new Date(c.last_active_at).toLocaleString("ru-RU")}
-                    </div>
-                  </div>
-                  <span className="text-xs text-gray-400">
-                    {c.message_count} сообщ.
-                  </span>
+          <div className="grid gap-4">
+            {sortedKeys.map((key) => (
+              <div key={key}>
+                <div className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2 px-1">
+                  {key === "__main__" ? "🌐 Главная страница" : `🔗 ${key}`}
                 </div>
-                {c.short_link_code && (
-                  <div className="text-xs text-blue-400 mt-1">🔗 {c.short_link_code}</div>
-                )}
-              </button>
+                <div className="grid gap-2">
+                  {groups[key].map(renderChatCard)}
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -93,9 +122,7 @@ export default function ChatListPage() {
                 <div
                   key={i}
                   className={`rounded-lg p-2 text-sm ${
-                    m.role === "user"
-                      ? "bg-gray-800 ml-8"
-                      : "bg-blue-900/30 mr-8"
+                    m.role === "user" ? "bg-gray-800 ml-8" : "bg-blue-900/30 mr-8"
                   }`}
                 >
                   <div className="text-xs text-gray-500 mb-1">

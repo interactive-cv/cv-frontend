@@ -189,7 +189,9 @@ export async function uploadSpecPdf(
 
 export interface ChatSessionBrief {
   id: string;
+  display_name: string;
   visitor_name: string | null;
+  is_admin: boolean;
   short_link_code: string | null;
   message_count: number;
   created_at: string;
