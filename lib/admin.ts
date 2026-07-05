@@ -58,6 +58,8 @@ export interface ApplicationInput {
 
 /** Поля отклика, которые можно обновить через PATCH. */
 export interface ApplicationUpdate {
+  company?: string;
+  role?: string;
   cover_letter?: string;
   cv_markdown?: string;
   status?: string;

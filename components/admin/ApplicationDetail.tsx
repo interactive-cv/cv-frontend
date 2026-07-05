@@ -75,6 +75,8 @@ export default function ApplicationDetail({ id }: { id: string }) {
     setSaving(true);
     try {
       await updateApplication(token, id, {
+        company: data.company ?? undefined,
+        role: data.role,
         kind: data.kind,
         source_url: data.source_url ?? undefined,
         chat_url: data.chat_url ?? undefined,
@@ -381,6 +383,28 @@ export default function ApplicationDetail({ id }: { id: string }) {
 
       {tab === "details" && (
         <div className="grid gap-4 max-w-xl">
+          {/* Заказчик/Компания + Название/Роль */}
+          <div className="grid grid-cols-2 gap-3">
+            <Field
+              label={data.kind === "freelance" ? "Заказчик" : "Компания"}
+              value={data.company ?? ""}
+              onChange={(v) => {
+                setData({ ...data, company: v });
+                setDirty(true);
+              }}
+              placeholder="Имя заказчика или компания"
+            />
+            <Field
+              label={data.kind === "freelance" ? "Название заказа" : "Роль"}
+              value={data.role}
+              onChange={(v) => {
+                setData({ ...data, role: v });
+                setDirty(true);
+              }}
+              placeholder="Название проекта или роль"
+            />
+          </div>
+
           {/* Тип */}
           <div>
             <label className="text-xs text-gray-500 block mb-1">Тип отклика</label>
