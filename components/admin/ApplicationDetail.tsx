@@ -119,12 +119,26 @@ export default function ApplicationDetail({ id }: { id: string }) {
   }
 
   async function archive() {
+    if (!data) return;
+    if (!window.confirm("Архивировать отклик?\n\nАрхив можно будет восстановить.")) return;
     const token = localStorage.getItem(TOKEN_KEY);
-    if (!token || !data) return;
+    if (!token) return;
     try {
       await archiveApplication(token, id);
       setData({ ...data, status: "archived" });
       setMsg("✓ Архивировано");
+    } catch {
+      setMsg("Ошибка");
+    }
+  }
+
+  async function unarchive() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token || !data) return;
+    try {
+      await updateApplication(token, id, { status: "draft" });
+      setData({ ...data, status: "draft" });
+      setMsg("✓ Восстановлен из архива");
     } catch {
       setMsg("Ошибка");
     }
@@ -286,6 +300,14 @@ export default function ApplicationDetail({ id }: { id: string }) {
               className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
             >
               📦 Архивировать
+            </button>
+          )}
+          {data.status === "archived" && (
+            <button
+              onClick={unarchive}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+            >
+              ♻ Восстановить
             </button>
           )}
           <button
