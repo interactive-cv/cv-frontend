@@ -185,6 +185,44 @@ export async function uploadSpecPdf(
   return res.json();
 }
 
+// ===== Chats: HR-диалоги =====
+
+export interface ChatSessionBrief {
+  id: string;
+  visitor_name: string | null;
+  short_link_code: string | null;
+  message_count: number;
+  created_at: string;
+  last_active_at: string;
+}
+
+export interface ChatMessageItem {
+  role: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ChatSessionDetail {
+  id: string;
+  visitor_name: string | null;
+  short_link_code: string | null;
+  created_at: string;
+  last_active_at: string;
+  messages: ChatMessageItem[];
+}
+
+export async function listChats(token: string): Promise<ChatSessionBrief[]> {
+  const res = await fetch(`${API}/api/admin/chats`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+export async function getChat(token: string, id: string): Promise<ChatSessionDetail> {
+  const res = await fetch(`${API}/api/admin/chats/${id}`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
 // ===== Settings: редактируемые тексты (мастер-CV, README, промпты) =====
 
 export interface ConfigText {

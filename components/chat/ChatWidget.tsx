@@ -12,17 +12,57 @@ interface Msg {
   text: string;
 }
 
+/** Читает cookie по имени (для session_id). */
+function getCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/** Извлекает short_link_code из URL если на странице /{CODE}. */
+function getShortLinkCode(): string | null {
+  const path = window.location.pathname;
+  const match = path.match(/^\/([A-Z]{4,6})$/);
+  return match ? match[1] : null;
+}
+
 export default function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
   const [streaming, setStreaming] = useState("");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Авто-прокрутка к последнему сообщению при новых сообщениях или стриминге.
+  // Авто-прокрутка к последнему сообщению.
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, streaming]);
+
+  // Загрузка истории при первом открытии чата.
+  useEffect(() => {
+    if (!open || historyLoaded) return;
+    setHistoryLoaded(true);
+
+    const sid = getCookie("cv_session_id");
+    if (!sid) return;
+
+    setSessionId(sid);
+    // Загружаем историю
+    fetch(`${API}/api/chat/history/${sid}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.messages?.length) {
+          setMessages(
+            data.messages.map((m: { role: string; content: string }) => ({
+              role: m.role as "user" | "assistant",
+              text: m.content,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
+  }, [open, historyLoaded]);
 
   async function send() {
     const userMsg = input.trim();
@@ -34,7 +74,11 @@ export default function ChatWidget() {
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg }),
+        body: JSON.stringify({
+          message: userMsg,
+          session_id: sessionId ?? undefined,
+          short_link_code: getShortLinkCode() ?? undefined,
+        }),
       });
       if (!res.body) throw new Error("no body");
       const reader = res.body.getReader();
@@ -51,7 +95,7 @@ export default function ChatWidget() {
       console.error("chat stream failed", err);
       setMessages((m) => [
         ...m,
-        { role: "assistant", text: "AI временно недоступен. Свяжитесь напрямую в Telegram @your_handle." },
+        { role: "assistant", text: "AI временно недоступен. Свяжитесь напрямую в Telegram @vrg18." },
       ]);
     } finally {
       setStreaming("");
@@ -77,12 +121,11 @@ export default function ChatWidget() {
               ✕
             </button>
           </div>
-          {/* Контейнер сообщений: растёт с контентом до max-h, далее — скролл. */}
+          {/* Контейнер сообщений. */}
           <div className="flex-1 min-h-0 max-h-96 overflow-y-auto mb-2">
             {messages.map((m, i) => (
               <ChatMessage key={i} {...m} />
             ))}
-            {/* Ждём первый токен → typing-индикатор; токены пошли → стримящееся сообщение. */}
             {streaming === "…" && <TypingIndicator />}
             {streaming && streaming !== "…" && (
               <ChatMessage role="assistant" text={streaming} />
