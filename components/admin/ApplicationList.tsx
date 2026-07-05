@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { listApplications, type Application, type ApplicationKind } from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
+import VisitorsTooltip from "./VisitorsTooltip";
 
 const STATUS_CONFIG: Record<string, { color: string; dot: string; label: string }> = {
   active: { color: "#22c55e", dot: "●", label: "active" },
@@ -129,10 +130,7 @@ export default function ApplicationList() {
                   <span>
                     👁 кликов: <strong className="text-gray-200">{app.total_clicks}</strong>
                   </span>
-                  <span>
-                    👤 уникальных:{" "}
-                    <strong className="text-gray-200">{app.unique_clicks}</strong>
-                  </span>
+                  <VisitorsTooltip appId={app.id} uniqueCount={app.unique_clicks} />
                 </div>
               </Link>
             );

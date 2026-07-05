@@ -6,13 +6,16 @@ import {
   archiveApplication,
   deleteApplication,
   getApplication,
+  getVisitors,
   publishApplication,
   updateApplication,
   type ApplicationDetail,
   type ApplicationKind,
+  type Visitor,
 } from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
+import VisitorsTooltip from "./VisitorsTooltip";
 
 type Tab = "cv" | "cover" | "vacancy" | "details" | "analytics";
 
@@ -534,6 +537,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
               <strong className="text-gray-200">{data.short_link_code}</strong>
             </div>
           )}
+          {/* Уникальные посетители с именами */}
+          {data.unique_clicks > 0 && (
+            <VisitorsBlock appId={id} />
+          )}
         </div>
       )}
     </div>
@@ -564,6 +571,50 @@ function Field({
         placeholder={placeholder}
         className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
       />
+    </div>
+  );
+}
+
+/** Блок уникальных посетителей в табе Аналитика (полный список). */
+function VisitorsBlock({ appId }: { appId: string }) {
+  const [visitors, setVisitors] = useState<Visitor[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    getVisitors(token, appId)
+      .then(setVisitors)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [appId]);
+
+  if (loading) return <p className="text-gray-500 text-sm">Загрузка посетителей...</p>;
+  if (visitors.length === 0) {
+    return (
+      <p className="text-gray-500 text-sm">
+        Посетители появятся после кликов с новым трекингом session_id.
+      </p>
+    );
+  }
+
+  return (
+    <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
+      <h3 className="text-sm font-semibold mb-3">👤 Уникальные посетители ({visitors.length})</h3>
+      <div className="grid gap-2">
+        {visitors.map((v) => (
+          <div key={v.session_id} className="flex justify-between items-center text-sm">
+            <span className="flex items-center gap-2">
+              {v.is_admin && <span>👑</span>}
+              <span className="text-gray-200">{v.display_name}</span>
+              {v.has_chat && <span title="Был чат" className="text-blue-400">💬</span>}
+            </span>
+            <span className="text-gray-500 text-xs">
+              {v.views} просм. · {v.last_visit ? new Date(v.last_visit).toLocaleDateString("ru-RU") : ""}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

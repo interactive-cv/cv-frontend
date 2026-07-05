@@ -187,6 +187,23 @@ export async function uploadSpecPdf(
 
 // ===== Chats: HR-диалоги =====
 
+export interface Visitor {
+  session_id: string;
+  display_name: string;
+  is_admin: boolean;
+  views: number;
+  last_visit: string | null;
+  has_chat: boolean;
+}
+
+export async function getVisitors(token: string, appId: string): Promise<Visitor[]> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/visitors`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
 export interface ChatSessionBrief {
   id: string;
   display_name: string;
