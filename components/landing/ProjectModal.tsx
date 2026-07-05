@@ -68,6 +68,22 @@ export default function ProjectModal({
               ))}
             </div>
           </div>
+
+          {project.links && project.links.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {project.links.map((link) => (
+                <a
+                  key={link.url}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs px-3 py-1.5 rounded-lg bg-blue-600/20 border border-blue-600/40 text-blue-400 hover:bg-blue-600/30 transition-colors"
+                >
+                  🔗 {link.label}
+                </a>
+              ))}
+            </div>
+          )}
         </motion.div>
       </motion.div>
     </AnimatePresence>

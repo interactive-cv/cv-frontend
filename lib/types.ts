@@ -20,6 +20,11 @@ export interface CVVariant {
   content_markdown: string;
 }
 
+export interface ProjectLink {
+  label: string;
+  url: string;
+}
+
 export interface Project {
   title: string;
   period: string;
@@ -28,5 +33,6 @@ export interface Project {
   short_desc: string;
   stack: string[];
   metrics: Record<string, string | number>;
+  links?: ProjectLink[];
   order_idx: number;
 }
