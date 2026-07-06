@@ -43,6 +43,9 @@ export default function NewApplication() {
   const [cvMarkdown, setCvMarkdown] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
 
+  // Дополнительная инструкция для LLM (на эту вакансию)
+  const [extraInstruction, setExtraInstruction] = useState("");
+
   const isFreelance = kind === "freelance";
 
   async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -92,6 +95,7 @@ export default function NewApplication() {
         selected_projects: selectedProjects,
         kind,
         spec_text: specText || undefined,
+        extra_instruction: extraInstruction || undefined,
       });
       setCvMarkdown(result.cv_markdown);
       setCoverLetter(result.cover_letter);
@@ -323,6 +327,25 @@ export default function NewApplication() {
               })}
             </div>
           </div>
+
+          {/* Дополнительная инструкция для LLM */}
+          <div>
+            <div className="text-sm text-gray-400 mb-1">
+              Доп. инструкция для AI (необязательно)
+            </div>
+            <p className="text-[11px] text-gray-600 mb-2 leading-snug">
+              💡 Укажите, что подчеркнуть: «акцент на backend-опыт», «убрать 1С»,
+              «не упоминать фриланс», «тональность — формальная».
+              Кратко, 1-2 строки. LLM учтёт это при генерации.
+            </p>
+            <input
+              value={extraInstruction}
+              onChange={(e) => setExtraInstruction(e.target.value)}
+              placeholder="Например: сделать акцент на опыте с PostgreSQL"
+              className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
           <div className="flex gap-3">
             <button
               onClick={handleGenerate}

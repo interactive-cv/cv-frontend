@@ -91,6 +91,7 @@ export async function generateCV(
     selected_projects: string[];
     kind?: ApplicationKind;
     spec_text?: string;
+    extra_instruction?: string;
   }
 ): Promise<{ cv_markdown: string; cover_letter: string }> {
   const res = await fetch(`${API}/api/admin/applications/generate`, {
