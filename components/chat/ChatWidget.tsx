@@ -71,9 +71,14 @@ export default function ChatWidget() {
     setMessages((m) => [...m, { role: "user", text: userMsg }]);
     setStreaming("…");
     try {
+      // Если в localStorage есть admin token — помечаем чат как админский.
+      const adminToken = localStorage.getItem("cv_admin_token");
       const res = await fetch(`${API}/api/chat`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(adminToken ? { "X-Admin-Token": adminToken } : {}),
+        },
         body: JSON.stringify({
           message: userMsg,
           session_id: sessionId ?? undefined,
