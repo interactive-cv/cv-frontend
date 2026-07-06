@@ -339,11 +339,11 @@ export default function NewApplication() {
               «не упоминать фриланс», «тональность — формальная».
               Кратко, 1-2 строки. LLM учтёт это при генерации.
             </p>
-            <input
+            <textarea
               value={extraInstruction}
               onChange={(e) => setExtraInstruction(e.target.value)}
               placeholder="Например: сделать акцент на опыте с PostgreSQL"
-              className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[80px] resize-y"
             />
           </div>
 
@@ -388,16 +388,16 @@ export default function NewApplication() {
 
       <div className="grid gap-6 mt-6">
         <SplitEditor
-          label="✏ CV (редактируйте markdown)"
-          value={cvMarkdown}
-          onChange={setCvMarkdown}
-          minHeight={300}
-        />
-        <SplitEditor
           label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
           value={coverLetter}
           onChange={setCoverLetter}
           minHeight={150}
+        />
+        <SplitEditor
+          label="✏ CV (редактируйте markdown)"
+          value={cvMarkdown}
+          onChange={setCvMarkdown}
+          minHeight={300}
         />
       </div>
 

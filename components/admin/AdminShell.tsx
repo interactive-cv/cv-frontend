@@ -37,9 +37,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <div className="min-h-screen flex bg-black text-gray-100">
-      {/* Sidebar */}
-      <aside className="w-56 border-r border-gray-800 p-4 flex flex-col gap-1 shrink-0">
+    <div className="h-screen flex bg-black text-gray-100 overflow-hidden">
+      {/* Sidebar — фиксированный, не прокручивается */}
+      <aside className="w-56 border-r border-gray-800 p-4 flex flex-col gap-1 shrink-0 h-full overflow-y-auto">
         <div className="text-lg font-bold mb-6 px-2">⚡ Admin</div>
         {navItems.map((item) => {
           const active = pathname === item.href;
@@ -64,14 +64,14 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
         <div className="flex-1" />
         <button
           onClick={logout}
-          className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-white transition-colors text-left"
+          className="px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-white transition-colors text-left shrink-0"
         >
           🚪 Выйти
         </button>
       </aside>
 
-      {/* Контент */}
-      <main className="flex-1 p-6 overflow-auto">{children}</main>
+      {/* Контент — прокручивается отдельно */}
+      <main className="flex-1 p-6 overflow-y-auto">{children}</main>
     </div>
   );
 }

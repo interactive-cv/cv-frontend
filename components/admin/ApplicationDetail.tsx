@@ -33,7 +33,7 @@ const KIND_LABEL: Record<string, string> = {
 export default function ApplicationDetail({ id }: { id: string }) {
   const router = useRouter();
   const [data, setData] = useState<ApplicationDetail | null>(null);
-  const [tab, setTab] = useState<Tab>("cv");
+  const [tab, setTab] = useState<Tab>("cover");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
@@ -212,8 +212,8 @@ export default function ApplicationDetail({ id }: { id: string }) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com";
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "cv", label: "📄 CV" },
     { id: "cover", label: "✉ Отклик" },
+    { id: "cv", label: "📄 CV" },
     { id: "vacancy", label: isFreelance ? "📋 Заказ" : "📋 Вакансия" },
     { id: "details", label: "⚙ Детали" },
     { id: "analytics", label: "📊 Аналитика" },
