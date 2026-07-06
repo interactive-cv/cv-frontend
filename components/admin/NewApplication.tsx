@@ -222,7 +222,8 @@ export default function NewApplication() {
             className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[200px] resize-y"
           />
 
-          {/* ТЗ заказа (PDF + textarea) */}
+          {/* ТЗ заказа (PDF + textarea) — только для фриланс-заказов */}
+          {isFreelance && (
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-400">
@@ -257,6 +258,7 @@ export default function NewApplication() {
               className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px] resize-y"
             />
           </div>
+          )}
 
           {/* Поля фриланс-заказа */}
           {isFreelance && (
