@@ -14,8 +14,12 @@ export default function AdminLogin({ onSuccess }: { onSuccess: (token: string) =
       setError("Введите admin-token");
       return;
     }
-    localStorage.setItem(TOKEN_KEY, token.trim());
-    onSuccess(token.trim());
+    const t = token.trim();
+    localStorage.setItem(TOKEN_KEY, t);
+    // Cookie для проброса через proxy.ts (SSR/Edge) — чтобы бэкенд мог
+    // идентифицировать админа при резолве короткой ссылки (визит на CV-страницу).
+    document.cookie = `${TOKEN_KEY}=${t}; path=/; max-age=86400; SameSite=Lax`;
+    onSuccess(t);
   }
 
   return (
