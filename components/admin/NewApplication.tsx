@@ -16,7 +16,7 @@ export default function NewApplication() {
   const [error, setError] = useState("");
 
   // Тип отклика
-  const [kind, setKind] = useState<ApplicationKind>("vacancy");
+  const [kind, setKind] = useState<ApplicationKind>("freelance");
 
   // Форма
   const [company, setCompany] = useState("");
@@ -80,7 +80,7 @@ export default function NewApplication() {
 
   async function handleGenerate() {
     if (!role.trim() || !vacancyText.trim()) {
-      setError("Заполните роль/проект и текст вакансии/заказа");
+      setError("Заполните роль/заказ и текст вакансии/заказа");
       return;
     }
     setError("");
@@ -163,16 +163,6 @@ export default function NewApplication() {
           {/* Селектор типа */}
           <div className="flex gap-2">
             <button
-              onClick={() => setKind("vacancy")}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                kind === "vacancy"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-800 text-gray-400 hover:text-white"
-              }`}
-            >
-              💼 Вакансия
-            </button>
-            <button
               onClick={() => setKind("freelance")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 kind === "freelance"
@@ -181,6 +171,16 @@ export default function NewApplication() {
               }`}
             >
               🚀 Фриланс
+            </button>
+            <button
+              onClick={() => setKind("vacancy")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                kind === "vacancy"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:text-white"
+              }`}
+            >
+              💼 Вакансия
             </button>
           </div>
 
@@ -194,10 +194,27 @@ export default function NewApplication() {
             <input
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              placeholder={isFreelance ? "Проект (Flutter app)" : "Роль (Flutter Developer)"}
+              placeholder={isFreelance ? "Заказ (Flutter app)" : "Роль (Flutter Developer)"}
               className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
+
+          {/* Ссылки (сразу после заказчика/роли) */}
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              value={sourceUrl}
+              onChange={(e) => setSourceUrl(e.target.value)}
+              placeholder={isFreelance ? "Ссылка на заказ (FL.ru)" : "Ссылка на вакансию"}
+              className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+            <input
+              value={chatUrl}
+              onChange={(e) => setChatUrl(e.target.value)}
+              placeholder={isFreelance ? "Ссылка на чат с заказчиком" : "Ссылка на диалог с HR"}
+              className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+
           <textarea
             value={vacancyText}
             onChange={(e) => setVacancyText(e.target.value)}
@@ -238,22 +255,6 @@ export default function NewApplication() {
               onChange={(e) => setSpecText(e.target.value)}
               placeholder="Вставьте текст ТЗ вручную или загрузите PDF выше..."
               className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px] resize-y"
-            />
-          </div>
-
-          {/* Ссылки (общие) */}
-          <div className="grid grid-cols-2 gap-3">
-            <input
-              value={sourceUrl}
-              onChange={(e) => setSourceUrl(e.target.value)}
-              placeholder={isFreelance ? "Ссылка на проект (FL.ru)" : "Ссылка на вакансию"}
-              className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            <input
-              value={chatUrl}
-              onChange={(e) => setChatUrl(e.target.value)}
-              placeholder={isFreelance ? "Ссылка на чат с заказчиком" : "Ссылка на диалог с HR"}
-              className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
