@@ -418,8 +418,7 @@ export default function NewApplication() {
         </button>
         <button
           onClick={() => handleGenerate()}
-          disabled={phase === "generating"}
-          className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           🔄 Перегенерировать
         </button>
