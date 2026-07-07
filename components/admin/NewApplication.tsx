@@ -403,7 +403,7 @@ export default function NewApplication() {
         />
       </div>
 
-      <div className="flex gap-3 mt-6">
+      <div className="flex gap-3 mt-6 flex-wrap">
         <button
           onClick={() => handleSave("draft")}
           className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -415,6 +415,13 @@ export default function NewApplication() {
           className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
           Сохранить и опубликовать →
+        </button>
+        <button
+          onClick={() => handleGenerate()}
+          disabled={phase === "generating"}
+          className="bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          🔄 Перегенерировать
         </button>
         <button
           onClick={handleCancel}
