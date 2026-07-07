@@ -45,6 +45,7 @@ export default function NewApplication() {
 
   // Дополнительная инструкция для LLM (на эту вакансию)
   const [extraInstruction, setExtraInstruction] = useState("");
+  const [temperature, setTemperature] = useState(0.8);
 
   const isFreelance = kind === "freelance";
 
@@ -96,6 +97,7 @@ export default function NewApplication() {
         kind,
         spec_text: specText || undefined,
         extra_instruction: extraInstruction || undefined,
+        temperature,
       });
       setCvMarkdown(result.cv_markdown);
       setCoverLetter(result.cover_letter);
@@ -347,6 +349,23 @@ export default function NewApplication() {
               placeholder="Например: сделать акцент на опыте с PostgreSQL"
               className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[80px] resize-y"
             />
+          </div>
+
+          {/* Температура LLM */}
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-400 shrink-0">Креативность AI:</span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.1}
+              value={temperature}
+              onChange={(e) => setTemperature(parseFloat(e.target.value))}
+              className="flex-1 accent-blue-500"
+            />
+            <span className="text-xs text-gray-400 w-20 text-right">
+              {temperature.toFixed(1)} {temperature <= 0.3 ? "(стабильно)" : temperature >= 0.8 ? "(креативно)" : ""}
+            </span>
           </div>
 
           <div className="flex gap-3">

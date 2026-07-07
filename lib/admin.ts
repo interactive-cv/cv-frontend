@@ -92,6 +92,7 @@ export async function generateCV(
     kind?: ApplicationKind;
     spec_text?: string;
     extra_instruction?: string;
+    temperature?: number;
   }
 ): Promise<{ cv_markdown: string; cover_letter: string }> {
   const res = await fetch(`${API}/api/admin/applications/generate`, {
