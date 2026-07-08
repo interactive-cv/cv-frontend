@@ -94,7 +94,7 @@ export async function generateCV(
     extra_instruction?: string;
     temperature?: number;
   }
-): Promise<{ cv_markdown: string; cover_letter: string }> {
+): Promise<{ cv_markdown: string; cover_letter: string; estimate: string | null }> {
   const res = await fetch(`${API}/api/admin/applications/generate`, {
     method: "POST",
     headers: authHeaders(token),

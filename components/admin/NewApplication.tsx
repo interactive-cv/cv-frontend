@@ -42,6 +42,7 @@ export default function NewApplication() {
   // Результат генерации
   const [cvMarkdown, setCvMarkdown] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
+  const [estimate, setEstimate] = useState<string | null>(null);
 
   // Дополнительная инструкция для LLM (на эту вакансию)
   const [extraInstruction, setExtraInstruction] = useState("");
@@ -101,6 +102,7 @@ export default function NewApplication() {
       });
       setCvMarkdown(result.cv_markdown);
       setCoverLetter(result.cover_letter);
+      setEstimate(result.estimate);
       setPhase("edit");
     } catch (e) {
       setError(`Ошибка генерации: ${(e as Error).message}`);
@@ -421,6 +423,15 @@ export default function NewApplication() {
           minHeight={300}
         />
       </div>
+
+      {/* Оценка стоимости/сроков (только для фриланс, только для владельца) */}
+      {isFreelance && estimate && (
+        <div className="mt-4 bg-amber-900/20 border border-amber-700/40 rounded-xl p-4">
+          <h3 className="text-sm font-semibold text-amber-400 mb-2">💰 Оценка стоимости и сроков (только для вас)</h3>
+          <pre className="text-sm text-amber-200/80 whitespace-pre-wrap font-sans">{estimate}</pre>
+          <p className="text-xs text-amber-600 mt-2">Эти цифры не попадут в CV или cover letter.</p>
+        </div>
+      )}
 
       <div className="flex gap-3 mt-6 flex-wrap">
         <button
