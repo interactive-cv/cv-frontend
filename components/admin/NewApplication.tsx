@@ -129,8 +129,9 @@ export default function NewApplication() {
       .filter(Boolean)
       .map(toSlug);
     const base = parts.join("-");
-    const suffix = Math.random().toString(36).slice(2, 6);
-    const slug = `${base}-${suffix}`;
+    // Уникальность: если базовый slug занят, добавляем -2, -3...
+    // Но без случайного суффикса — чистый, читаемый URL.
+    const slug = base;
     try {
       const result = await createApplication(token, {
         company,
@@ -153,7 +154,31 @@ export default function NewApplication() {
       });
       router.push(`/admin/${result.id}`);
     } catch (e) {
-      setError(`Ошибка сохранения: ${(e as Error).message}`);
+      const msg = (e as Error).message;
+      if (msg.includes("409")) {
+        // Slug занят — пробуем с -2, -3...
+        for (let i = 2; i <= 10; i++) {
+          try {
+            const result2 = await createApplication(token, {
+              company, role, vacancy_text: vacancyText, cover_letter: coverLetter,
+              cv_markdown: cvMarkdown, slug: `${base}-${i}`, status,
+              kind,
+              source_url: sourceUrl || undefined, chat_url: chatUrl || undefined,
+              budget: budget || undefined, applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
+              deadline: deadline || undefined, expected_term: expectedTerm || undefined,
+              rating: rating || undefined, spec_text: specText || undefined,
+              estimate: estimate || undefined,
+            });
+            router.push(`/admin/${result2.id}`);
+            return;
+          } catch {
+            continue;
+          }
+        }
+        setError("Не удалось создать: slug уже занят");
+      } else {
+        setError(`Ошибка сохранения: ${msg}`);
+      }
     }
   }
 
