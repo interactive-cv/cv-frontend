@@ -149,6 +149,7 @@ export default function NewApplication() {
         expected_term: expectedTerm || undefined,
         rating: rating || undefined,
         spec_text: specText || undefined,
+        estimate: estimate || undefined,
       });
       router.push(`/admin/${result.id}`);
     } catch (e) {

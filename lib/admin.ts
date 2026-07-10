@@ -25,6 +25,7 @@ export interface Application {
   expected_term: string | null;
   rating: number | null;
   spec_text: string | null;
+  estimate: string | null;
   created_at: string;
   published_at: string | null;
 }
@@ -54,6 +55,7 @@ export interface ApplicationInput {
   expected_term?: string;
   rating?: number;
   spec_text?: string;
+  estimate?: string;
 }
 
 /** Поля отклика, которые можно обновить через PATCH. */
@@ -72,6 +74,7 @@ export interface ApplicationUpdate {
   expected_term?: string;
   rating?: number;
   spec_text?: string;
+  estimate?: string;
 }
 
 /** Список откликов с inline-аналитикой. */

@@ -17,7 +17,7 @@ import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
 import VisitorsTooltip from "./VisitorsTooltip";
 
-type Tab = "cv" | "cover" | "vacancy" | "details" | "analytics";
+type Tab = "cover" | "cv" | "estimate" | "vacancy" | "details" | "analytics";
 
 const STATUS_DOT: Record<string, string> = {
   active: "#22c55e",
@@ -211,13 +211,17 @@ export default function ApplicationDetail({ id }: { id: string }) {
   const isFreelance = data.kind === "freelance";
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com";
 
-  const tabs: { id: Tab; label: string }[] = [
+  const allTabs: { id: Tab; label: string }[] = [
     { id: "cover", label: "✉ Отклик" },
+    { id: "estimate", label: "💰 Оценка" },
     { id: "cv", label: "📄 CV" },
     { id: "vacancy", label: isFreelance ? "📋 Заказ" : "📋 Вакансия" },
     { id: "details", label: "⚙ Детали" },
     { id: "analytics", label: "📊 Аналитика" },
   ];
+  const tabs = allTabs.filter((t): t is { id: Tab; label: string } =>
+    t.id !== "estimate" || !!data.estimate
+  );
 
   return (
     <div>
@@ -339,6 +343,16 @@ export default function ApplicationDetail({ id }: { id: string }) {
       </div>
 
       {/* Контент табов */}
+      {tab === "estimate" && data.estimate && (
+        <div className="bg-amber-900/20 border border-amber-700/40 rounded-xl p-5">
+          <h3 className="text-sm font-semibold text-amber-400 mb-3">💰 Оценка стоимости и сроков</h3>
+          <pre className="text-sm text-amber-200/80 whitespace-pre-wrap font-sans">{data.estimate}</pre>
+          <p className="text-xs text-amber-600 mt-3">
+            Эти цифры не попадут в CV или cover letter. Оценка сгенерирована LLM на основе описания заказа и ТЗ.
+          </p>
+        </div>
+      )}
+
       {tab === "cv" && (
         <div>
           <SplitEditor
