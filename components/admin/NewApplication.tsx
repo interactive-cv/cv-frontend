@@ -114,12 +114,21 @@ export default function NewApplication() {
     setError("");
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
-    // Slug из company+role или только role (если company не указан).
-    const parts = [company, role]
+    // Slug: для фриланс — только роль (без заказчика), для вакансий — компания+роль.
+    // Транслитерация кириллицы → латиница.
+    const translit: Record<string, string> = {
+      а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"e",ж:"zh",з:"z",и:"i",й:"y",
+      к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",
+      х:"h",ц:"ts",ч:"ch",ш:"sh",щ:"sch",ъ:"",ы:"y",ь:"",э:"e",ю:"yu",я:"ya",
+    };
+    function toSlug(s: string): string {
+      return s.toLowerCase().split("").map((ch) => translit[ch] ?? ch).join("")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    }
+    const parts = (kind === "freelance" ? [role] : [company, role])
       .filter(Boolean)
-      .map((s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-"))
-      .join("-");
-    const base = parts.replace(/^-|-$/g, "");
+      .map(toSlug);
+    const base = parts.join("-");
     const suffix = Math.random().toString(36).slice(2, 6);
     const slug = `${base}-${suffix}`;
     try {
