@@ -10,7 +10,7 @@
 
 - **Next.js 16 (App Router) + React 19** — серверный рендеринг (SSR) лендинга и страниц резюме
 - **TypeScript (strict)** — строгая типизация, без `any`
-- **Tailwind CSS v4 + @tailwindcss/typography** — оформление, тёмная тема
+- **Tailwind CSS v4 + @tailwindcss/typography** — оформление, тёмная/светлая тема (next-themes)
 - **framer-motion** — анимации появления и переходов
 - **react-force-graph-2d** — интерактивный граф знаний
 - **react-markdown** — рендер ответов AI и страниц CV

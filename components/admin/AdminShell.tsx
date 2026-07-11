@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AdminLogin, { TOKEN_KEY } from "./AdminLogin";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
@@ -37,10 +38,13 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <div className="h-screen flex bg-black text-gray-100 overflow-hidden">
+    <div className="h-screen flex bg-background text-foreground overflow-hidden">
       {/* Sidebar — фиксированный, не прокручивается */}
       <aside className="w-56 border-r border-gray-800 p-4 flex flex-col gap-1 shrink-0 h-full overflow-y-auto">
-        <div className="text-lg font-bold mb-6 px-2">⚡ Admin</div>
+        <div className="flex items-center justify-between mb-6 px-2">
+          <span className="text-lg font-bold">⚡ Admin</span>
+          <ThemeToggle />
+        </div>
         {navItems.map((item) => {
           const active = pathname === item.href;
           return (

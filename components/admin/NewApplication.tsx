@@ -43,6 +43,7 @@ export default function NewApplication() {
   const [cvMarkdown, setCvMarkdown] = useState("");
   const [coverLetter, setCoverLetter] = useState("");
   const [estimate, setEstimate] = useState<string | null>(null);
+  const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
 
   // Дополнительная инструкция для LLM (на эту вакансию)
   const [extraInstruction, setExtraInstruction] = useState("");
@@ -106,6 +107,7 @@ export default function NewApplication() {
       setCvMarkdown(result.cv_markdown);
       setCoverLetter(result.cover_letter);
       setEstimate(result.estimate);
+      setGeneratedPrompt(result.prompt);
       setPhase("edit");
     } catch (e) {
       setError(`Ошибка генерации: ${(e as Error).message}`);
@@ -154,6 +156,7 @@ export default function NewApplication() {
         rating: rating || undefined,
         spec_text: specText || undefined,
         estimate: estimate || undefined,
+        generated_prompt: generatedPrompt || undefined,
       });
       router.push(`/admin/${result.id}`);
     } catch (e) {
@@ -171,6 +174,7 @@ export default function NewApplication() {
               deadline: deadline || undefined, expected_term: expectedTerm || undefined,
               rating: rating || undefined, spec_text: specText || undefined,
               estimate: estimate || undefined,
+              generated_prompt: generatedPrompt || undefined,
             });
             router.push(`/admin/${result2.id}`);
             return;

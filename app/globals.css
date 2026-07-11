@@ -1,11 +1,24 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
-/* Тёмная тема по умолчанию (современный вид портфолио). */
+/* ===== Тема: тёмная (по умолчанию) и светлая (через .light на <html>) =====
+   next-themes добавляет class="light" или class="dark" на <html>.
+   Переопределяем Tailwind gray-* утилиты через CSS-переменные,
+   чтобы все ~157 классов (bg-gray-900, text-gray-400 и т.д.) работали
+   в обеих темах БЕЗ правки каждого компонента.
+*/
+
 :root {
   --background: #0a0a0b;
   --foreground: #ededed;
   --accent: #3b82f6;
+}
+
+html.light {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+  --accent: #2563eb;
+  color-scheme: light;
 }
 
 @theme inline {
@@ -19,6 +32,27 @@
 body {
   background: var(--background);
   color: var(--foreground);
+}
+
+/* ===== Light-mode override слоя =====
+   Tailwind v4 генерирует утилиты из палитры. Мы переопределяем значения
+   ключевых gray/black цветов для html.light, чтобы все компоненты
+   с классами bg-gray-900, text-gray-400 и т.д. автоматически
+   адаптировались без правки каждого файла.
+*/
+html.light {
+  --color-black: #ffffff;
+  --color-gray-50: #f8fafc;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #64748b;
+  --color-gray-500: #475569;
+  --color-gray-600: #334155;
+  --color-gray-700: #1e293b;
+  --color-gray-800: #f1f5f9;   /* was dark input bg → light input bg */
+  --color-gray-900: #ffffff;   /* was dark card bg → white card bg */
+  --color-gray-950: #f8fafc;
 }
 
 /* Плавная прокрутка по якорям (Header → #projects/#graph). */
@@ -38,6 +72,27 @@ html {
   --tw-prose-hr: #27272a;
 }
 
+/* Light-вариант типографики CV. */
+html.light .prose-cv {
+  --tw-prose-body: #334155;
+  --tw-prose-headings: #0f172a;
+  --tw-prose-bold: #0f172a;
+  --tw-prose-bullets: #94a3b8;
+  --tw-prose-code: #d97706;
+  --tw-prose-hr: #e2e8f0;
+}
+/* В light-режиме не нужен prose-invert. */
+html.light .prose-invert {
+  --tw-prose-body: #334155;
+  --tw-prose-headings: #0f172a;
+  --tw-prose-bold: #0f172a;
+  --tw-prose-bullets: #94a3b8;
+  --tw-prose-code: #d97706;
+  --tw-prose-hr: #e2e8f0;
+  --tw-prose-links: var(--accent);
+  --tw-prose-quote-borders: var(--accent);
+}
+
 /* Кастомный скроллбар (тёмный, ненавязчивый). */
 ::-webkit-scrollbar {
   width: 10px;
@@ -52,6 +107,15 @@ html {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #52525b;
+}
+html.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+html.light ::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 /* ===== Анимации кнопки чата ===== */

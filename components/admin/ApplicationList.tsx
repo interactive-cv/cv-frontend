@@ -5,6 +5,7 @@ import Link from "next/link";
 import { listApplications, type Application, type ApplicationKind } from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
 import VisitorsTooltip from "./VisitorsTooltip";
+import UpcomingInterviews from "./UpcomingInterviews";
 
 const STATUS_CONFIG: Record<string, { color: string; dot: string; label: string }> = {
   active: { color: "#22c55e", dot: "●", label: "active" },
@@ -49,6 +50,7 @@ export default function ApplicationList() {
 
   return (
     <div>
+      <UpcomingInterviews />
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <h1 className="text-xl font-bold">Отклики ({filtered.length})</h1>
         {/* Фильтр по типу */}

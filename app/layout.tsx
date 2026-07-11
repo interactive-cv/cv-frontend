@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { SITE_URL, OWNER_NAME, DEFAULT_TITLE } from "@/lib/site";
 
 const geistSans = Geist({
@@ -54,11 +55,14 @@ export default function RootLayout({
   return (
     <html
       lang="ru"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-black text-gray-100">
-        {children}
-        <ChatWidget />
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        <ThemeProvider>
+          {children}
+          <ChatWidget />
+        </ThemeProvider>
       </body>
     </html>
   );

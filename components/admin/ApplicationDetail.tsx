@@ -4,20 +4,25 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   archiveApplication,
+  createInterview,
   deleteApplication,
+  deleteInterview,
   getApplication,
   getVisitors,
   publishApplication,
   updateApplication,
+  updateInterview,
   type ApplicationDetail,
   type ApplicationKind,
+  type Interview,
   type Visitor,
 } from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
 import VisitorsTooltip from "./VisitorsTooltip";
+import InterviewsTab from "./InterviewsTab";
 
-type Tab = "cover" | "cv" | "estimate" | "vacancy" | "details" | "analytics";
+type Tab = "cover" | "cv" | "estimate" | "vacancy" | "interviews" | "details" | "analytics";
 
 const STATUS_DOT: Record<string, string> = {
   active: "#22c55e",
@@ -48,6 +53,17 @@ export default function ApplicationDetail({ id }: { id: string }) {
       .catch(() => setMsg("Ошибка загрузки"))
       .finally(() => setLoading(false));
   }, [id]);
+
+  async function reloadInterviews() {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      const fresh = await getApplication(token, id);
+      setData(fresh);
+    } catch {
+      /* молча — данные в UI не критичны */
+    }
+  }
 
   async function saveEdits() {
     if (!data) return;
@@ -219,6 +235,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
     { id: "estimate", label: "💰 Оценка" },
     { id: "cv", label: "📄 CV" },
     { id: "vacancy", label: isContest ? "📋 Конкурс" : isFreelance ? "📋 Заказ" : "📋 Вакансия" },
+    { id: "interviews", label: "📅 Собеседования" },
     { id: "details", label: "⚙ Детали" },
     { id: "analytics", label: "📊 Аналитика" },
   ];
@@ -420,6 +437,14 @@ export default function ApplicationDetail({ id }: { id: string }) {
         </pre>
       )}
 
+      {tab === "interviews" && (
+        <InterviewsTab
+          appId={id}
+          interviews={data.interviews ?? []}
+          onChanged={reloadInterviews}
+        />
+      )}
+
       {tab === "details" && (
         <div className="grid gap-4 max-w-xl">
           {/* Заказчик/Компания + Название/Роль */}
@@ -575,6 +600,18 @@ export default function ApplicationDetail({ id }: { id: string }) {
           >
             {saving ? "Сохранение..." : "Сохранить детали"}
           </button>
+
+          {/* Snapshot промпта генерации (read-only, для отладки/воспроизводимости) */}
+          {data.generated_prompt && (
+            <details className="mt-4">
+              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-400">
+                🔧 Промпт генерации ({data.generated_prompt.length} символов)
+              </summary>
+              <pre className="mt-2 bg-gray-900 rounded-lg p-3 text-xs text-gray-500 whitespace-pre-wrap font-mono max-h-80 overflow-y-auto">
+                {data.generated_prompt}
+              </pre>
+            </details>
+          )}
         </div>
       )}
 

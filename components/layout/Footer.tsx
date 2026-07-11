@@ -1,5 +1,6 @@
 import { getMasterCV } from "@/lib/api";
 import { OWNER_NAME, OWNER_ROLE } from "@/lib/site";
+import ThemeToggle from "@/components/ThemeToggle";
 
 /**
  * Подвал: имя и контакты берутся из API (мастер-CV в БД),
@@ -23,7 +24,7 @@ export default async function Footer() {
         <p>
           © {new Date().getFullYear()} {OWNER_NAME} · {OWNER_ROLE}
         </p>
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center">
           {email && (
             <a href={`mailto:${email}`} className="hover:text-white transition-colors">
               Email
@@ -37,6 +38,7 @@ export default async function Footer() {
               Telegram
             </a>
           )}
+          <ThemeToggle />
         </div>
       </div>
     </footer>

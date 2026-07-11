@@ -30,10 +30,23 @@ export interface Application {
   published_at: string | null;
 }
 
+export interface Interview {
+  id: string;
+  application_id: string;
+  scheduled_at: string;
+  notes_before: string | null;
+  notes_after: string | null;
+  created_at: string;
+  application_role?: string;
+  application_company?: string | null;
+}
+
 export interface ApplicationDetail extends Application {
   vacancy_text: string;
   cv_markdown: string;
   cover_letter: string;
+  generated_prompt: string | null;
+  interviews: Interview[];
   last_click_at: string | null;
 }
 
@@ -56,6 +69,7 @@ export interface ApplicationInput {
   rating?: number;
   spec_text?: string;
   estimate?: string;
+  generated_prompt?: string;
 }
 
 /** Поля отклика, которые можно обновить через PATCH. */
@@ -97,7 +111,7 @@ export async function generateCV(
     extra_instruction?: string;
     temperature?: number;
   }
-): Promise<{ cv_markdown: string; cover_letter: string; estimate: string | null }> {
+): Promise<{ cv_markdown: string; cover_letter: string; estimate: string | null; prompt: string }> {
   const res = await fetch(`${API}/api/admin/applications/generate`, {
     method: "POST",
     headers: authHeaders(token),
@@ -245,6 +259,50 @@ export async function listChats(token: string): Promise<ChatSessionBrief[]> {
 
 export async function getChat(token: string, id: string): Promise<ChatSessionDetail> {
   const res = await fetch(`${API}/api/admin/chats/${id}`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+// ===== Interviews: этапы собеседований =====
+
+export async function createInterview(
+  token: string,
+  appId: string,
+  data: { scheduled_at: string; notes_before?: string; notes_after?: string }
+): Promise<Interview> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/interviews`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+export async function updateInterview(
+  token: string,
+  interviewId: string,
+  data: { scheduled_at?: string; notes_before?: string; notes_after?: string }
+): Promise<Interview> {
+  const res = await fetch(`${API}/api/admin/interviews/${interviewId}`, {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+export async function deleteInterview(token: string, interviewId: string): Promise<void> {
+  const res = await fetch(`${API}/api/admin/interviews/${interviewId}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+}
+
+export async function getUpcoming(token: string): Promise<Interview[]> {
+  const res = await fetch(`${API}/api/admin/upcoming`, { headers: authHeaders(token) });
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
 }
