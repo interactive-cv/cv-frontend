@@ -28,6 +28,7 @@ const STATUS_DOT: Record<string, string> = {
 const KIND_LABEL: Record<string, string> = {
   vacancy: "💼 Вакансия",
   freelance: "🚀 Фриланс",
+  contest: "🏆 Конкурс",
 };
 
 export default function ApplicationDetail({ id }: { id: string }) {
@@ -209,13 +210,15 @@ export default function ApplicationDetail({ id }: { id: string }) {
   if (!data) return <p className="text-red-400">{msg || "Не найдено"}</p>;
 
   const isFreelance = data.kind === "freelance";
+  const isContest = data.kind === "contest";
+  const isFreelanceLike = isFreelance || isContest;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com";
 
   const allTabs: { id: Tab; label: string }[] = [
     { id: "cover", label: "✉ Отклик" },
     { id: "estimate", label: "💰 Оценка" },
     { id: "cv", label: "📄 CV" },
-    { id: "vacancy", label: isFreelance ? "📋 Заказ" : "📋 Вакансия" },
+    { id: "vacancy", label: isContest ? "📋 Конкурс" : isFreelance ? "📋 Заказ" : "📋 Вакансия" },
     { id: "details", label: "⚙ Детали" },
     { id: "analytics", label: "📊 Аналитика" },
   ];
@@ -253,7 +256,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
                   rel="noopener noreferrer"
                   className="text-blue-400 hover:text-blue-300 text-xs underline"
                 >
-                  📄 {isFreelance ? "Проект" : "Вакансия"}
+                  📄 {isContest ? "Конкурс" : isFreelance ? "Проект" : "Вакансия"}
                 </a>
               )}
               {data.chat_url && (
@@ -263,7 +266,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
                   rel="noopener noreferrer"
                   className="text-blue-400 hover:text-blue-300 text-xs underline"
                 >
-                  💬 {isFreelance ? "Заказчик" : "HR"}
+                  💬 {isFreelanceLike ? "Заказчик" : "HR"}
                 </a>
               )}
             </div>
@@ -422,7 +425,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
           {/* Заказчик/Компания + Название/Роль */}
           <div className="grid grid-cols-2 gap-3">
             <Field
-              label={data.kind === "freelance" ? "Заказчик" : "Компания"}
+              label={isContest ? "Заказчик конкурса" : isFreelance ? "Заказчик" : "Компания"}
               value={data.company ?? ""}
               onChange={(v) => {
                 setData({ ...data, company: v });
@@ -431,7 +434,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
               placeholder="Имя заказчика или компания"
             />
             <Field
-              label={data.kind === "freelance" ? "Название заказа" : "Роль"}
+              label={isContest ? "Конкурс" : isFreelance ? "Название заказа" : "Роль"}
               value={data.role}
               onChange={(v) => {
                 setData({ ...data, role: v });
@@ -445,7 +448,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
           <div>
             <label className="text-xs text-gray-500 block mb-1">Тип отклика</label>
             <div className="flex gap-2">
-              {(["vacancy", "freelance"] as ApplicationKind[]).map((k) => (
+              {(["vacancy", "freelance", "contest"] as ApplicationKind[]).map((k) => (
                 <button
                   key={k}
                   onClick={() => {
@@ -456,7 +459,9 @@ export default function ApplicationDetail({ id }: { id: string }) {
                     data.kind === k
                       ? k === "freelance"
                         ? "bg-purple-600 text-white"
-                        : "bg-blue-600 text-white"
+                        : k === "contest"
+                          ? "bg-amber-600 text-white"
+                          : "bg-blue-600 text-white"
                       : "bg-gray-800 text-gray-400 hover:text-white"
                   }`}
                 >
@@ -488,10 +493,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
             />
           </div>
 
-          {/* Поля фриланс-заказа */}
+          {/* Поля фриланс-заказа / конкурса */}
           <div className="grid grid-cols-2 gap-3">
             <Field
-              label="Бюджет"
+              label={isContest ? "Приз / бюджет конкурса" : "Бюджет"}
               value={data.budget ?? ""}
               onChange={(v) => {
                 setData({ ...data, budget: v });
@@ -500,7 +505,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
               placeholder="50 000 ₽"
             />
             <Field
-              label="Конкурс (откликнулись)"
+              label={isContest ? "Участников конкурса" : "Конкурс (откликнулись)"}
               value={data.applicant_count?.toString() ?? ""}
               onChange={(v) => {
                 setData({ ...data, applicant_count: v ? parseInt(v, 10) : null });
@@ -519,7 +524,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
               type="date"
             />
             <Field
-              label="Ожидаемый срок сотрудничества"
+              label={isContest ? "Приз победителю (что получает)" : "Ожидаемый срок сотрудничества"}
               value={data.expected_term ?? ""}
               onChange={(v) => {
                 setData({ ...data, expected_term: v });
@@ -529,9 +534,11 @@ export default function ApplicationDetail({ id }: { id: string }) {
             />
           </div>
 
-          {/* ТЗ заказа */}
+          {/* ТЗ заказа/конкурса */}
           <div>
-            <label className="text-xs text-gray-500 block mb-1">ТЗ заказа (текст)</label>
+            <label className="text-xs text-gray-500 block mb-1">
+              ТЗ {isContest ? "конкурса" : "заказа"} (текст)
+            </label>
             <textarea
               value={data.spec_text ?? ""}
               onChange={(e) => {

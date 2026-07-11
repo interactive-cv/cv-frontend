@@ -18,6 +18,7 @@ type SectionKey =
   | "prompt_chat"
   | "prompt_generate"
   | "prompt_generate_freelance"
+  | "prompt_generate_contest"
   | "prompt_cv_edit";
 
 const SECTION_META: Record<
@@ -52,6 +53,12 @@ const SECTION_META: Record<
     title: "Промпт генерации отклика (фриланс)",
     icon: "🚀",
     hint: "Промпт для AI-генерации CV и cover letter для фриланс-заказов (FL.ru). Плейсхолдеры: {cv_markdown}, {vacancy_text}, {selected_projects}, {cv_link}.",
+    height: 350,
+  },
+  prompt_generate_contest: {
+    title: "Промпт генерации отклика (конкурс)",
+    icon: "🏆",
+    hint: "Промпт для AI-генерации CV и cover letter для конкурсов (FL.ru). Тон — участник конкурса, акцент на скорость, AI, критерии оценки. Плейсхолдеры: {cv_markdown}, {vacancy_text}, {selected_projects}, {cv_link}.",
     height: 350,
   },
   prompt_cv_edit: {
@@ -192,6 +199,7 @@ export default function SettingsPage() {
     "prompt_chat",
     "prompt_generate",
     "prompt_generate_freelance",
+    "prompt_generate_contest",
     "prompt_cv_edit",
   ];
 

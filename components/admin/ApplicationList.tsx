@@ -15,6 +15,13 @@ const STATUS_CONFIG: Record<string, { color: string; dot: string; label: string 
 const KIND_BADGE: Record<string, string> = {
   vacancy: "💼",
   freelance: "🚀",
+  contest: "🏆",
+};
+
+const KIND_LABEL_RU: Record<string, string> = {
+  vacancy: "Вакансии",
+  freelance: "Фриланс",
+  contest: "Конкурсы",
 };
 
 type Filter = "all" | ApplicationKind;
@@ -46,7 +53,7 @@ export default function ApplicationList() {
         <h1 className="text-xl font-bold">Отклики ({filtered.length})</h1>
         {/* Фильтр по типу */}
         <div className="flex gap-1 bg-gray-900 rounded-lg p-1">
-          {(["all", "vacancy", "freelance"] as Filter[]).map((f) => (
+          {(["all", "vacancy", "freelance", "contest"] as Filter[]).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -56,8 +63,7 @@ export default function ApplicationList() {
                   : "text-gray-400 hover:text-white"
               }`}
             >
-              {f === "all" ? "Все" : KIND_BADGE[f]}{" "}
-              {f === "all" ? "" : f === "vacancy" ? "Вакансии" : "Фриланс"}
+              {f === "all" ? "Все" : `${KIND_BADGE[f]} ${KIND_LABEL_RU[f]}`}
             </button>
           ))}
         </div>
@@ -75,6 +81,7 @@ export default function ApplicationList() {
           {filtered.map((app) => {
             const cfg = STATUS_CONFIG[app.status] ?? STATUS_CONFIG.draft;
             const isFreelance = app.kind === "freelance";
+            const isFreelanceLike = app.kind === "freelance" || app.kind === "contest";
             return (
               <Link
                 key={app.id}
@@ -106,19 +113,19 @@ export default function ApplicationList() {
                 </div>
                 {/* inline-аналитика + freelance-поля */}
                 <div className="flex gap-5 mt-3 text-xs text-gray-400 flex-wrap">
-                  {isFreelance && app.budget && (
+                  {isFreelanceLike && app.budget && (
                     <span>
                       💰 <strong className="text-gray-200">{app.budget}</strong>
                     </span>
                   )}
-                  {isFreelance && app.deadline && (
+                  {isFreelanceLike && app.deadline && (
                     <span>
                       📅 до {new Date(app.deadline).toLocaleDateString("ru-RU")}
                     </span>
                   )}
-                  {isFreelance && app.applicant_count != null && (
+                  {isFreelanceLike && app.applicant_count != null && (
                     <span>
-                      👥 конкурс: <strong className="text-gray-200">{app.applicant_count}</strong>
+                      👥 участников: <strong className="text-gray-200">{app.applicant_count}</strong>
                     </span>
                   )}
                   {app.short_link_code && (

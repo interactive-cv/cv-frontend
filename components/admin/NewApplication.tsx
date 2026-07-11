@@ -49,6 +49,9 @@ export default function NewApplication() {
   const [temperature, setTemperature] = useState(0.8);
 
   const isFreelance = kind === "freelance";
+  const isContest = kind === "contest";
+  // Конкурс разделяет с фрилансом поля: ТЗ, бюджет, дедлайн, участников, estimate.
+  const isFreelanceLike = isFreelance || isContest;
 
   async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -125,7 +128,7 @@ export default function NewApplication() {
       return s.toLowerCase().split("").map((ch) => translit[ch] ?? ch).join("")
         .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
     }
-    const parts = (kind === "freelance" ? [role] : [company, role])
+    const parts = (isFreelance || isContest ? [role] : [company, role])
       .filter(Boolean)
       .map(toSlug);
     const base = parts.join("-");
@@ -212,6 +215,16 @@ export default function NewApplication() {
               🚀 Фриланс
             </button>
             <button
+              onClick={() => setKind("contest")}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                kind === "contest"
+                  ? "bg-amber-600 text-white"
+                  : "bg-gray-800 text-gray-400 hover:text-white"
+              }`}
+            >
+              🏆 Конкурс
+            </button>
+            <button
               onClick={() => setKind("vacancy")}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 kind === "vacancy"
@@ -227,13 +240,17 @@ export default function NewApplication() {
             <input
               value={company}
               onChange={(e) => setCompany(e.target.value)}
-              placeholder={isFreelance ? "Заказчик" : "Компания (Yandex)"}
+              placeholder={isContest ? "Заказчик конкурса" : isFreelance ? "Заказчик" : "Компания (Yandex)"}
               className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <input
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              placeholder={isFreelance ? "Заказ (Flutter app)" : "Роль (Flutter Developer)"}
+              placeholder={
+                isContest ? "Конкурс (Flutter-приложение по хлопку)"
+                : isFreelance ? "Заказ (Flutter app)"
+                : "Роль (Flutter Developer)"
+              }
               className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -243,13 +260,13 @@ export default function NewApplication() {
             <input
               value={sourceUrl}
               onChange={(e) => setSourceUrl(e.target.value)}
-              placeholder={isFreelance ? "Ссылка на заказ (FL.ru)" : "Ссылка на вакансию"}
+              placeholder={isFreelanceLike ? "Ссылка на заказ/конкурс (FL.ru)" : "Ссылка на вакансию"}
               className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <input
               value={chatUrl}
               onChange={(e) => setChatUrl(e.target.value)}
-              placeholder={isFreelance ? "Ссылка на чат с заказчиком" : "Ссылка на диалог с HR"}
+              placeholder={isFreelanceLike ? "Ссылка на чат с заказчиком" : "Ссылка на диалог с HR"}
               className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
@@ -257,16 +274,20 @@ export default function NewApplication() {
           <textarea
             value={vacancyText}
             onChange={(e) => setVacancyText(e.target.value)}
-            placeholder={isFreelance ? "Вставьте описание фриланс-заказа..." : "Вставьте текст вакансии..."}
+            placeholder={
+              isContest ? "Вставьте описание конкурса (условия, критерии, что сдавать)..."
+              : isFreelance ? "Вставьте описание фриланс-заказа..."
+              : "Вставьте текст вакансии..."
+            }
             className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[200px] resize-y"
           />
 
-          {/* ТЗ заказа (PDF + textarea) — только для фриланс-заказов */}
-          {isFreelance && (
+          {/* ТЗ заказа (PDF + textarea) — для фриланс-заказов и конкурсов */}
+          {isFreelanceLike && (
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm text-gray-400">
-                ТЗ заказа {isFreelance ? "(повысит релевантность отклика)" : "(необязательно)"}
+                ТЗ {isContest ? "конкурса" : "заказа"} {isFreelanceLike ? "(повысит релевантность отклика)" : "(необязательно)"}
               </span>
               <label className="text-xs px-2.5 py-1 rounded-lg border bg-gray-800 border-gray-700 text-gray-400 hover:text-white cursor-pointer transition-colors">
                 📎 Загрузить PDF
@@ -299,20 +320,20 @@ export default function NewApplication() {
           </div>
           )}
 
-          {/* Поля фриланс-заказа */}
-          {isFreelance && (
+          {/* Поля фриланс-заказа / конкурса */}
+          {isFreelanceLike && (
             <div className="grid grid-cols-2 gap-3">
               <input
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                placeholder="Бюджет (50 000 ₽)"
+                placeholder={isContest ? "Приз / бюджет конкурса" : "Бюджет (50 000 ₽)"}
                 className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               <input
                 value={applicantCount}
                 onChange={(e) => setApplicantCount(e.target.value)}
                 type="number"
-                placeholder="Конкурс (откликнулись)"
+                placeholder={isContest ? "Участников конкурса" : "Конкурс (откликнулись)"}
                 className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               <input
@@ -325,7 +346,10 @@ export default function NewApplication() {
               <input
                 value={expectedTerm}
                 onChange={(e) => setExpectedTerm(e.target.value)}
-                placeholder="Ожидаемый срок (2 недели)"
+                placeholder={
+                  isContest ? "Что получает победитель (постоянная работа)"
+                  : "Ожидаемый срок (2 недели)"
+                }
                 className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             </div>
@@ -430,7 +454,9 @@ export default function NewApplication() {
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <TypingIndicator />
         <p className="text-gray-400 text-sm">
-          {isFreelance ? "AI генерирует отклик на фриланс-заказ..." : "AI генерирует CV и отклик..."}
+          {isContest ? "AI генерирует отклик на конкурс..."
+            : isFreelance ? "AI генерирует отклик на фриланс-заказ..."
+            : "AI генерирует CV и отклик..."}
         </p>
       </div>
     );
@@ -459,8 +485,8 @@ export default function NewApplication() {
         />
       </div>
 
-      {/* Оценка стоимости/сроков (только для фриланс, только для владельца) */}
-      {isFreelance && estimate && (
+      {/* Оценка стоимости/сроков (для фриланс и конкурса, только для владельца) */}
+      {isFreelanceLike && estimate && (
         <div className="mt-4 bg-amber-900/20 border border-amber-700/40 rounded-xl p-4">
           <h3 className="text-sm font-semibold text-amber-400 mb-2">💰 Оценка стоимости и сроков (только для вас)</h3>
           <pre className="text-sm text-amber-200/80 whitespace-pre-wrap font-sans">{estimate}</pre>

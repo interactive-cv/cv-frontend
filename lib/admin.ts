@@ -4,7 +4,7 @@ function authHeaders(token: string): HeadersInit {
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 
-export type ApplicationKind = "vacancy" | "freelance";
+export type ApplicationKind = "vacancy" | "freelance" | "contest";
 
 /** Общие поля отклика (для списка и деталей). */
 export interface Application {
@@ -263,6 +263,7 @@ export interface Settings {
   prompt_chat: ConfigText;
   prompt_generate: ConfigText;
   prompt_generate_freelance: ConfigText;
+  prompt_generate_contest: ConfigText;
   prompt_cv_edit: ConfigText;
 }
 
