@@ -37,7 +37,7 @@ export default function Hero({ cv }: { cv: MasterCV }) {
         height={96}
         className="mx-auto rounded-2xl shadow-lg shadow-black/40 mb-6"
       />
-      <h1 className="text-5xl sm:text-6xl font-bold bg-gradient-to-r from-white via-gray-200 to-gray-400 bg-clip-text text-transparent">
+      <h1 className="text-5xl sm:text-6xl font-bold text-foreground">
         {FALLBACK.name}
       </h1>
       <p className="mt-4 text-lg text-gray-400">{cv.summary || FALLBACK.tagline}</p>
