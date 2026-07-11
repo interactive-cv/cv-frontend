@@ -15,9 +15,9 @@
 }
 
 html.light {
-  --background: #f8fafc;
-  --foreground: #1e293b;
-  --accent: #2563eb;
+  --background: #f5f0e8;
+  --foreground: #3d3528;
+  --accent: #7c6f4d;
   color-scheme: light;
 }
 
@@ -40,19 +40,31 @@ body {
    с классами bg-gray-900, text-gray-400 и т.д. автоматически
    адаптировались без правки каждого файла.
 */
+/* Skill-боксы в светлой теме: восстанавливаем контрастность текста.
+   Базовые классы text-gray-300 слишком бледные на тёплом карточном фоне. */
+html.light .bg-gray-800\/70 {
+  color: #4a4030;
+}
+/* Language-боксы наследуют — увеличиваем читаемость уровня. */
+html.light .bg-gray-800\/70 .text-gray-400 {
+  color: #6b5f48;
+}
+
 html.light {
-  --color-black: #ffffff;
-  --color-gray-50: #f8fafc;
-  --color-gray-100: #f1f5f9;
-  --color-gray-200: #e2e8f0;
-  --color-gray-300: #cbd5e1;
-  --color-gray-400: #64748b;
-  --color-gray-500: #475569;
-  --color-gray-600: #334155;
-  --color-gray-700: #1e293b;
-  --color-gray-800: #f1f5f9;   /* was dark input bg → light input bg */
-  --color-gray-900: #ffffff;   /* was dark card bg → white card bg */
-  --color-gray-950: #f8fafc;
+  /* «Монашеская» тёплая палитра: льняной/пергаментный фон, мягкие границы.
+     Не снежно-белая — глаза не режет. Тёплый серо-коричневый (taupe) вместо холодного slate. */
+  --color-black: #f5f0e8;
+  --color-gray-50: #f7f2ea;
+  --color-gray-100: #f0e9db;
+  --color-gray-200: #e4dcc8;
+  --color-gray-300: #d4c9b0;
+  --color-gray-400: #a89a7c;
+  --color-gray-500: #8a7d62;
+  --color-gray-600: #6b5f48;
+  --color-gray-700: #c9bda1;   /* мягкая граница (был #1e293b — слишком резко) */
+  --color-gray-800: #ede4d2;   /* карточный/полевой фон */
+  --color-gray-900: #f7f2ea;   /* базовый фон карточек */
+  --color-gray-950: #f5f0e8;
 }
 
 /* Плавная прокрутка по якорям (Header → #projects/#graph). */
@@ -74,21 +86,21 @@ html {
 
 /* Light-вариант типографики CV. */
 html.light .prose-cv {
-  --tw-prose-body: #334155;
-  --tw-prose-headings: #0f172a;
-  --tw-prose-bold: #0f172a;
-  --tw-prose-bullets: #94a3b8;
-  --tw-prose-code: #d97706;
-  --tw-prose-hr: #e2e8f0;
+  --tw-prose-body: #4a4030;
+  --tw-prose-headings: #2e2818;
+  --tw-prose-bold: #2e2818;
+  --tw-prose-bullets: #a89a7c;
+  --tw-prose-code: #8a6d3b;
+  --tw-prose-hr: #d4c9b0;
 }
 /* В light-режиме не нужен prose-invert. */
 html.light .prose-invert {
-  --tw-prose-body: #334155;
-  --tw-prose-headings: #0f172a;
-  --tw-prose-bold: #0f172a;
-  --tw-prose-bullets: #94a3b8;
-  --tw-prose-code: #d97706;
-  --tw-prose-hr: #e2e8f0;
+  --tw-prose-body: #4a4030;
+  --tw-prose-headings: #2e2818;
+  --tw-prose-bold: #2e2818;
+  --tw-prose-bullets: #a89a7c;
+  --tw-prose-code: #8a6d3b;
+  --tw-prose-hr: #d4c9b0;
   --tw-prose-links: var(--accent);
   --tw-prose-quote-borders: var(--accent);
 }

@@ -4,18 +4,19 @@ import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 
 /**
- * Кнопка переключения тёмной/светлой темы.
- * Маленькая, ставится в сайдбар админки и/или в футер публичного сайта.
+ * Тумблер переключения тёмной/светлой темы.
+ * Switch-стиль: овальная дорожка с кружком, который скользит влево/вправо.
+ * Иконки 🌙 (dark) / ☀ (light) внутри кружка.
  */
 export default function ThemeToggle({ className = "" }: { className?: string }) {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
-  // Избегаем гидратации-мисматча: рендерим иконку только после mount.
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <span className={`inline-block w-8 h-8 ${className}`} />;
+    // Плейсхолдер до гидратации — размер как у тумблера
+    return <span className={`inline-block w-11 h-6 ${className}`} />;
   }
 
   const isDark = theme === "dark";
@@ -24,10 +25,20 @@ export default function ThemeToggle({ className = "" }: { className?: string }) 
     <button
       onClick={() => setTheme(isDark ? "light" : "dark")}
       title={isDark ? "Светлая тема" : "Тёмная тема"}
-      className={`inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-800 hover:bg-gray-700 text-sm transition-colors ${className}`}
+      role="switch"
+      aria-checked={!isDark}
       aria-label="Переключить тему"
+      className={`relative inline-flex items-center w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ${
+        isDark ? "bg-gray-700" : "bg-amber-300"
+      } ${className}`}
     >
-      {isDark ? "☀" : "🌙"}
+      <span
+        className={`inline-flex items-center justify-center w-5 h-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${
+          isDark ? "translate-x-0.5" : "translate-x-[22px]"
+        }`}
+      >
+        <span className="text-[10px] leading-none">{isDark ? "🌙" : "☀"}</span>
+      </span>
     </button>
   );
 }

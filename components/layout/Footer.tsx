@@ -1,6 +1,5 @@
 import { getMasterCV } from "@/lib/api";
 import { OWNER_NAME, OWNER_ROLE } from "@/lib/site";
-import ThemeToggle from "@/components/ThemeToggle";
 
 /**
  * Подвал: имя и контакты берутся из API (мастер-CV в БД),
@@ -38,7 +37,6 @@ export default async function Footer() {
               Telegram
             </a>
           )}
-          <ThemeToggle />
         </div>
       </div>
     </footer>

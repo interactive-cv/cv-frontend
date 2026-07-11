@@ -1,4 +1,5 @@
 import { OWNER_NAME } from "@/lib/site";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
   return (
@@ -7,13 +8,14 @@ export default function Header() {
         <a href="/" className="font-semibold tracking-tight hover:text-blue-400 transition-colors">
           {OWNER_NAME}
         </a>
-        <div className="flex gap-5 text-sm text-gray-400">
+        <div className="flex gap-5 items-center text-sm text-gray-400">
           <a href="#projects" className="hover:text-white transition-colors">
             Проекты
           </a>
           <a href="#graph" className="hover:text-white transition-colors">
             Граф
           </a>
+          <ThemeToggle />
         </div>
       </nav>
     </header>
