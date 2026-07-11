@@ -58,6 +58,25 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
+      <head>
+        {/*
+          Anti-FOUC: ставим тему ДО рендера, синхронно.
+          При первом визите (нет cv-theme в localStorage) → всегда dark.
+          Иначе — восстанавливаем выбор пользователя.
+          Скрипт выполняется до гидратации next-themes, предотвращая мелькание.
+        */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            try {
+              var saved = localStorage.getItem('cv-theme');
+              var theme = saved === 'light' || saved === 'dark' ? saved : 'dark';
+              document.documentElement.classList.add(theme);
+            } catch(e) {
+              document.documentElement.classList.add('dark');
+            }
+          })();
+        ` }} />
+      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
           {children}
