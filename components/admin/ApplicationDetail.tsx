@@ -21,8 +21,9 @@ import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
 import VisitorsTooltip from "./VisitorsTooltip";
 import InterviewsTab from "./InterviewsTab";
+import ArtifactsTab from "./ArtifactsTab";
 
-type Tab = "cover" | "cv" | "estimate" | "vacancy" | "interviews" | "details" | "analytics";
+type Tab = "cover" | "cv" | "estimate" | "vacancy" | "interviews" | "artifacts" | "details" | "analytics";
 
 const STATUS_DOT: Record<string, string> = {
   active: "#22c55e",
@@ -236,6 +237,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
     { id: "cv", label: "📄 CV" },
     { id: "vacancy", label: isContest ? "📋 Конкурс" : isFreelance ? "📋 Заказ" : "📋 Вакансия" },
     { id: "interviews", label: "📅 Собеседования" },
+    { id: "artifacts", label: "📦 Артефакты" },
     { id: "details", label: "⚙ Детали" },
     { id: "analytics", label: "📊 Аналитика" },
   ];
@@ -441,6 +443,14 @@ export default function ApplicationDetail({ id }: { id: string }) {
         <InterviewsTab
           appId={id}
           interviews={data.interviews ?? []}
+          onChanged={reloadInterviews}
+        />
+      )}
+
+      {tab === "artifacts" && (
+        <ArtifactsTab
+          appId={id}
+          artifacts={data.artifacts ?? []}
           onChanged={reloadInterviews}
         />
       )}

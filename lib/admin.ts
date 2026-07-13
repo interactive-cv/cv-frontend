@@ -41,12 +41,25 @@ export interface Interview {
   application_company?: string | null;
 }
 
+export interface Artifact {
+  id: string;
+  application_id: string;
+  code: string;
+  filename: string;
+  mime_type: string | null;
+  size_bytes: number;
+  download_count: number;
+  download_url: string;
+  created_at: string;
+}
+
 export interface ApplicationDetail extends Application {
   vacancy_text: string;
   cv_markdown: string;
   cover_letter: string;
   generated_prompt: string | null;
   interviews: Interview[];
+  artifacts: Artifact[];
   last_click_at: string | null;
 }
 
@@ -305,6 +318,28 @@ export async function getUpcoming(token: string): Promise<Interview[]> {
   const res = await fetch(`${API}/api/admin/upcoming`, { headers: authHeaders(token) });
   if (!res.ok) throw new Error(`${res.status}`);
   return res.json();
+}
+
+// ===== Artifacts: файлы конкурсных откликов =====
+
+export async function uploadArtifact(token: string, appId: string, file: File): Promise<Artifact> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`${API}/api/admin/applications/${appId}/artifacts`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
+}
+
+export async function deleteArtifact(token: string, artifactId: string): Promise<void> {
+  const res = await fetch(`${API}/api/admin/artifacts/${artifactId}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
 }
 
 // ===== Settings: редактируемые тексты (мастер-CV, README, промпты) =====
