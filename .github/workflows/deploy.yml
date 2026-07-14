@@ -1,0 +1,58 @@
+name: deploy frontend to prod
+
+# Автодеплой frontend при merge feature-ветки в master.
+# Пересобирает только nextjs-контейнер (backend не трогает).
+#
+# Требует Secrets (те же что и в cv-backend):
+#   DEPLOY_SSH_KEY, DEPLOY_HOST, DEPLOY_USER, PERSONAL_ICON_B64
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cv-frontend
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Install personal icon (base64 → icon.png)
+        if: ${{ env.PERSONAL_ICON_B64 != '' }}
+        env:
+          PERSONAL_ICON_B64: ${{ secrets.PERSONAL_ICON_B64 }}
+        run: |
+          if [ -n "$PERSONAL_ICON_B64" ]; then
+            echo "$PERSONAL_ICON_B64" | base64 -d > app/icon.png
+            echo "✓ Личная иконка установлена"
+          else
+            echo "— PERSONAL_ICON_B64 не задан, остаётся open-source default"
+          fi
+
+      - name: rsync cv-frontend → VPS
+        run: |
+          rsync -az --delete \
+            --exclude='node_modules' --exclude='.next' --exclude='.git' --exclude='.cache' \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            ./ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/deploy/libera_cv/cv-frontend/
+
+      - name: Rebuild nextjs on VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
+            set -e
+            cd /home/deploy/libera_cv/cv-backend
+            docker compose -f docker-compose.prod.yml up -d --build nextjs
+          '
+
+      - name: Smoke test
+        run: |
+          sleep 5
+          curl -sf https://cv.libera.pro | grep -q '<html' && echo "✅ frontend деплой завершён" || (echo "❌ smoke failed" && exit 1)

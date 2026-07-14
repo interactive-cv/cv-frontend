@@ -1,0 +1,7 @@
+# Файлы, которые НЕ должны попадать в Docker-образ.
+node_modules
+.next
+.git
+.github
+.cache
+*.md
