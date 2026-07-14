@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { generateCV, createApplication, uploadSpecPdf, type ApplicationKind } from "@/lib/admin";
+import { generateCV, createApplication, uploadSpecFiles, type ApplicationKind } from "@/lib/admin";
 import { getProjects } from "@/lib/api";
 import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
@@ -54,21 +54,30 @@ export default function NewApplication() {
   // Конкурс разделяет с фрилансом поля: ТЗ, бюджет, дедлайн, участников, estimate.
   const isFreelanceLike = isFreelance || isContest;
 
-  async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handleSpecUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const files = Array.from(fileList);
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
     setSpecLoading(true);
     setSpecError("");
     try {
-      const result = await uploadSpecPdf(token, file);
-      setSpecText(result.spec_text);
+      const result = await uploadSpecFiles(token, files);
+      // Если уже есть текст — добавляем, иначе заменяем
+      setSpecText((prev) =>
+        prev.trim()
+          ? prev + "\n\n---\n\n" + result.spec_text
+          : result.spec_text
+      );
+      if (result.errors.length > 0) {
+        setSpecError(`Часть файлов не обработана: ${result.errors.join("; ")}`);
+      }
     } catch (err) {
-      setSpecError(`Ошибка загрузки PDF: ${(err as Error).message}`);
+      setSpecError(`Ошибка загрузки: ${(err as Error).message}`);
     } finally {
       setSpecLoading(false);
-      e.target.value = ""; // сбросить input чтобы можно было загрузить тот же файл снова
+      e.target.value = ""; // сбросить input чтобы можно было загрузить те же файлы снова
     }
   }
 
@@ -294,11 +303,12 @@ export default function NewApplication() {
                 ТЗ {isContest ? "конкурса" : "заказа"} {isFreelanceLike ? "(повысит релевантность отклика)" : "(необязательно)"}
               </span>
               <label className="text-xs px-2.5 py-1 rounded-lg border bg-gray-800 border-gray-700 text-gray-400 hover:text-white cursor-pointer transition-colors">
-                📎 Загрузить PDF
+                📎 Загрузить ТЗ (PDF/DOCX)
                 <input
                   type="file"
-                  accept="application/pdf"
-                  onChange={handlePdfUpload}
+                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  multiple
+                  onChange={handleSpecUpload}
                   className="hidden"
                   disabled={specLoading}
                 />

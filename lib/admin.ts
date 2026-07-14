@@ -203,13 +203,20 @@ export async function deleteApplication(token: string, id: string): Promise<void
   if (!res.ok) throw new Error(`${res.status}`);
 }
 
-/** Загрузка ТЗ в PDF → извлечение текста (pypdf на бэкенде). */
-export async function uploadSpecPdf(
+/** Загрузка файлов ТЗ (PDF/DOCX) → извлечение текста на бэкенде. */
+export async function uploadSpecFiles(
   token: string,
-  file: File
-): Promise<{ spec_text: string; pages: number; filename: string }> {
+  files: File[]
+): Promise<{
+  spec_text: string;
+  files: { filename: string; type: string; elements: number }[];
+  errors: string[];
+  total_chars: number;
+}> {
   const formData = new FormData();
-  formData.append("file", file);
+  for (const file of files) {
+    formData.append("files", file);
+  }
   const res = await fetch(`${API}/api/admin/applications/upload-spec`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
