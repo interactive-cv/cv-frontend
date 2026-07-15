@@ -45,6 +45,7 @@ jobs:
         run: |
           rsync -az --delete \
             --exclude='node_modules' --exclude='.next' --exclude='.git' --exclude='.cache' \
+            --exclude='app/icon.personal.png' \
             -e "ssh -i ~/.ssh/deploy_key" \
             ./ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/deploy/libera_cv/cv-frontend/
 
@@ -60,5 +61,14 @@ jobs:
 
       - name: Smoke test
         run: |
-          sleep 5
-          curl -sf https://cv.libera.pro | grep -q '<html' && echo "✅ frontend деплой завершён" || (echo "❌ smoke failed" && exit 1)
+          sleep 8
+          for i in 1 2 3; do
+            if curl -sf https://cv.libera.pro | grep -q '<html'; then
+              echo "✅ frontend деплой завершён"
+              exit 0
+            fi
+            echo "Попытка $i — не готово, ждём..."
+            sleep 5
+          done
+          echo "❌ smoke failed"
+          exit 1
