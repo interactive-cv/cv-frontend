@@ -522,10 +522,10 @@ export default function NewApplication() {
           Сохранить и опубликовать →
         </button>
         <button
-          onClick={() => handleGenerate()}
-          className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          onClick={() => setPhase("form")}
+          className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
         >
-          🔄 Перегенерировать
+          ← Назад (изменить данные)
         </button>
         <button
           onClick={handleCancel}
