@@ -16,7 +16,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout cv-frontend
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      # public/ может быть пустой в git — Dockerfile nextjs требует её существования.
+      - name: Ensure public/ exists
+        run: mkdir -p public
 
       - name: Setup SSH
         run: |
