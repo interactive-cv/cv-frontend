@@ -58,6 +58,7 @@ export interface ApplicationDetail extends Application {
   cv_markdown: string;
   cover_letter: string;
   generated_prompt: string | null;
+  extra_instruction: string | null;
   interviews: Interview[];
   artifacts: Artifact[];
   last_click_at: string | null;
@@ -83,6 +84,7 @@ export interface ApplicationInput {
   spec_text?: string;
   estimate?: string;
   generated_prompt?: string;
+  extra_instruction?: string;
 }
 
 /** Поля отклика, которые можно обновить через PATCH. */
@@ -347,6 +349,23 @@ export async function deleteArtifact(token: string, artifactId: string): Promise
     headers: authHeaders(token),
   });
   if (!res.ok) throw new Error(`${res.status}`);
+}
+
+// ===== Instructions: лента доп. инструкций для переиспользования =====
+
+export interface InstructionItem {
+  id: string;
+  application_id: string;
+  role: string;
+  company: string | null;
+  extra_instruction: string;
+  created_at: string;
+}
+
+export async function getInstructions(token: string): Promise<InstructionItem[]> {
+  const res = await fetch(`${API}/api/admin/instructions`, { headers: authHeaders(token) });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res.json();
 }
 
 // ===== Settings: редактируемые тексты (мастер-CV, README, промпты) =====

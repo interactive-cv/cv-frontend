@@ -7,6 +7,7 @@ import { getProjects } from "@/lib/api";
 import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
 import TypingIndicator from "@/components/chat/TypingIndicator";
+import InstructionsSidebar from "./InstructionsSidebar";
 
 type Phase = "form" | "generating" | "edit";
 
@@ -166,6 +167,7 @@ export default function NewApplication() {
         spec_text: specText || undefined,
         estimate: estimate || undefined,
         generated_prompt: generatedPrompt || undefined,
+        extra_instruction: extraInstruction || undefined,
       });
       router.push(`/admin/${result.id}`);
     } catch (e) {
@@ -184,6 +186,7 @@ export default function NewApplication() {
               rating: rating || undefined, spec_text: specText || undefined,
               estimate: estimate || undefined,
               generated_prompt: generatedPrompt || undefined,
+        extra_instruction: extraInstruction || undefined,
             });
             router.push(`/admin/${result2.id}`);
             return;
@@ -211,7 +214,9 @@ export default function NewApplication() {
   // ===== Phase: form =====
   if (phase === "form") {
     return (
-      <div className="max-w-2xl">
+      <div className="flex gap-6 items-start">
+        {/* Левая колонка — основная форма */}
+        <div className="flex-1 max-w-2xl">
         <h1 className="text-xl font-bold mb-6">Новый отклик</h1>
         {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
         <div className="grid gap-4">
@@ -458,6 +463,13 @@ export default function NewApplication() {
             </button>
           </div>
         </div>
+        </div>
+
+        {/* Правая колонка — лента прошлых инструкций */}
+        <aside className="w-72 shrink-0 sticky top-4">
+          <h3 className="text-sm font-semibold text-gray-300 mb-3">📋 Прошлые инструкции</h3>
+          <InstructionsSidebar onUse={(text) => setExtraInstruction(text)} />
+        </aside>
       </div>
     );
   }
