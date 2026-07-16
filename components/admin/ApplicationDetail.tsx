@@ -622,6 +622,18 @@ export default function ApplicationDetail({ id }: { id: string }) {
               </pre>
             </details>
           )}
+
+          {/* Доп. инструкция при генерации (read-only) */}
+          {data.extra_instruction && (
+            <details className="mt-4">
+              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-400">
+                📋 Доп. инструкция при генерации ({data.extra_instruction.length} символов)
+              </summary>
+              <pre className="mt-2 bg-gray-900 rounded-lg p-3 text-xs text-gray-400 whitespace-pre-wrap font-sans max-h-60 overflow-y-auto">
+                {data.extra_instruction}
+              </pre>
+            </details>
+          )}
         </div>
       )}
 
