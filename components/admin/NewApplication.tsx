@@ -8,6 +8,7 @@ import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
 import TypingIndicator from "@/components/chat/TypingIndicator";
 import InstructionsSidebar from "./InstructionsSidebar";
+import EditChat from "./EditChat";
 
 type Phase = "form" | "generating" | "edit";
 
@@ -490,61 +491,76 @@ export default function NewApplication() {
 
   // ===== Phase: edit =====
   return (
-    <div className="max-w-4xl">
-      <h1 className="text-xl font-bold mb-2">
-        {company} — {role}
-      </h1>
-      {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
+    <div className="flex gap-4 items-start">
+      {/* Левая колонка — редакторы + кнопки */}
+      <div className="flex-1 max-w-4xl">
+        <h1 className="text-xl font-bold mb-2">
+          {company} — {role}
+        </h1>
+        {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
-      <div className="grid gap-6 mt-6">
-        <SplitEditor
-          label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
-          value={coverLetter}
-          onChange={setCoverLetter}
-          minHeight={150}
-        />
-        <SplitEditor
-          label="✏ CV (редактируйте markdown)"
-          value={cvMarkdown}
-          onChange={setCvMarkdown}
-          minHeight={300}
-        />
+        <div className="grid gap-6 mt-6">
+          <SplitEditor
+            label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
+            value={coverLetter}
+            onChange={setCoverLetter}
+            minHeight={150}
+          />
+          <SplitEditor
+            label="✏ CV (редактируйте markdown)"
+            value={cvMarkdown}
+            onChange={setCvMarkdown}
+            minHeight={300}
+          />
+        </div>
+
+        {/* Оценка стоимости/сроков (для фриланс и конкурса, только для владельца) */}
+        {isFreelanceLike && estimate && (
+          <div className="mt-4 bg-amber-900/20 border border-amber-700/40 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-amber-400 mb-2">💰 Оценка стоимости и сроков (только для вас)</h3>
+            <pre className="text-sm text-amber-200/80 whitespace-pre-wrap font-sans">{estimate}</pre>
+            <p className="text-xs text-amber-600 mt-2">Эти цифры не попадут в CV или cover letter.</p>
+          </div>
+        )}
+
+        <div className="flex gap-3 mt-6 flex-wrap">
+          <button
+            onClick={() => handleSave("draft")}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Сохранить черновик
+          </button>
+          <button
+            onClick={() => handleSave("active")}
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Сохранить и опубликовать →
+          </button>
+          <button
+            onClick={() => setPhase("form")}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            ← Назад (изменить данные)
+          </button>
+          <button
+            onClick={handleCancel}
+            className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors"
+          >
+            Отменить
+          </button>
+        </div>
       </div>
 
-      {/* Оценка стоимости/сроков (для фриланс и конкурса, только для владельца) */}
-      {isFreelanceLike && estimate && (
-        <div className="mt-4 bg-amber-900/20 border border-amber-700/40 rounded-xl p-4">
-          <h3 className="text-sm font-semibold text-amber-400 mb-2">💰 Оценка стоимости и сроков (только для вас)</h3>
-          <pre className="text-sm text-amber-200/80 whitespace-pre-wrap font-sans">{estimate}</pre>
-          <p className="text-xs text-amber-600 mt-2">Эти цифры не попадут в CV или cover letter.</p>
-        </div>
-      )}
-
-      <div className="flex gap-3 mt-6 flex-wrap">
-        <button
-          onClick={() => handleSave("draft")}
-          className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          Сохранить черновик
-        </button>
-        <button
-          onClick={() => handleSave("active")}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          Сохранить и опубликовать →
-        </button>
-        <button
-          onClick={() => setPhase("form")}
-          className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-        >
-          ← Назад (изменить данные)
-        </button>
-        <button
-          onClick={handleCancel}
-          className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors"
-        >
-          Отменить
-        </button>
+      {/* Правая колонка — AI-чат для итеративной правки */}
+      <div className="h-[calc(100vh-3rem)] sticky top-4">
+        <EditChat
+          cvMarkdown={cvMarkdown}
+          coverLetter={coverLetter}
+          kind={kind}
+          vacancyText={vacancyText}
+          onCvChange={setCvMarkdown}
+          onCoverChange={setCoverLetter}
+        />
       </div>
     </div>
   );
