@@ -136,6 +136,31 @@ export async function generateCV(
   return res.json();
 }
 
+/**
+ * Итеративная правка отклика через чат с LLM (стриминг).
+ * Возвращает ReadableStream — токены накапливаются на стороне вызывающего.
+ */
+export async function editChatStream(
+  token: string,
+  data: {
+    cv_markdown: string;
+    cover_letter: string;
+    instruction: string;
+    kind?: ApplicationKind;
+    vacancy_text?: string;
+    history?: { role: string; content: string }[];
+    temperature?: number;
+  }
+): Promise<Response> {
+  const res = await fetch(`${API}/api/admin/applications/edit-chat`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`${res.status}`);
+  return res;
+}
+
 /** Создать отклик (после генерации/редактирования). */
 export async function createApplication(
   token: string,
