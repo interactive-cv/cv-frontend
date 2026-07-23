@@ -28,5 +28,7 @@ ENV NODE_ENV=production
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+# app/icon.png — favicon (Next.js metadata file). Standalone не копирует его автоматически.
+COPY --from=builder /app/app/icon.png ./app/icon.png
 EXPOSE 3000
 CMD ["node", "server.js"]
