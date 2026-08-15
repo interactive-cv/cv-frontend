@@ -17,8 +17,9 @@ export default function NewApplication() {
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState("");
 
-  // Тип отклика
+  // Тип отклика и платформа
   const [kind, setKind] = useState<ApplicationKind>("freelance");
+  const [platform, setPlatform] = useState<"fl" | "kwork">("fl");
 
   // Форма
   const [company, setCompany] = useState("");
@@ -55,6 +56,7 @@ export default function NewApplication() {
   const isContest = kind === "contest";
   // Конкурс разделяет с фрилансом поля: ТЗ, бюджет, дедлайн, участников, estimate.
   const isFreelanceLike = isFreelance || isContest;
+  const isKwork = platform === "kwork";
 
   async function handleSpecUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
@@ -111,6 +113,7 @@ export default function NewApplication() {
         vacancy_text: vacancyText,
         selected_projects: selectedProjects,
         kind,
+        platform: isKwork ? "kwork" : undefined,
         spec_text: specText || undefined,
         extra_instruction: extraInstruction || undefined,
         temperature,
@@ -158,6 +161,7 @@ export default function NewApplication() {
         slug,
         status,
         kind,
+        platform: isKwork ? "kwork" : undefined,
         source_url: sourceUrl || undefined,
         chat_url: chatUrl || undefined,
         budget: budget || undefined,
@@ -180,7 +184,7 @@ export default function NewApplication() {
             const result2 = await createApplication(token, {
               company, role, vacancy_text: vacancyText, cover_letter: coverLetter,
               cv_markdown: cvMarkdown, slug: `${base}-${i}`, status,
-              kind,
+              kind, platform: isKwork ? "kwork" : undefined,
               source_url: sourceUrl || undefined, chat_url: chatUrl || undefined,
               budget: budget || undefined, applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
               deadline: deadline || undefined, expected_term: expectedTerm || undefined,
@@ -254,6 +258,38 @@ export default function NewApplication() {
               💼 Вакансия
             </button>
           </div>
+
+          {/* Селектор платформы (для freelance/contest) */}
+          {isFreelanceLike && (
+            <div className="flex gap-2 items-center">
+              <span className="text-xs text-gray-500">Биржа:</span>
+              <button
+                onClick={() => setPlatform("fl")}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  platform === "fl"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
+                }`}
+              >
+                FL.ru
+              </button>
+              <button
+                onClick={() => setPlatform("kwork")}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  platform === "kwork"
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
+                }`}
+              >
+                🟢 Kwork
+              </button>
+              {isKwork && (
+                <span className="text-[10px] text-gray-600">
+                  Только отклик (150-2000 зн.), без ссылок и контактов
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <input
@@ -500,18 +536,36 @@ export default function NewApplication() {
         {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
 
         <div className="grid gap-6 mt-6">
-          <SplitEditor
-            label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
-            value={coverLetter}
-            onChange={setCoverLetter}
-            minHeight={150}
-          />
-          <SplitEditor
-            label="✏ CV (редактируйте markdown)"
-            value={cvMarkdown}
-            onChange={setCvMarkdown}
-            minHeight={300}
-          />
+          {isKwork ? (
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs text-gray-500">✏ Отклик для Kwork (только текст, без ссылок)</span>
+                <span className={`text-xs ${coverLetter.length < 150 ? "text-red-400" : coverLetter.length > 2000 ? "text-red-400" : "text-gray-500"}`}>
+                  {coverLetter.length} / 2000 {coverLetter.length < 150 && "(мин. 150)"}
+                </span>
+              </div>
+              <textarea
+                value={coverLetter}
+                onChange={(e) => setCoverLetter(e.target.value)}
+                className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[300px] resize-y"
+              />
+            </div>
+          ) : (
+            <>
+              <SplitEditor
+                label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
+                value={coverLetter}
+                onChange={setCoverLetter}
+                minHeight={150}
+              />
+              <SplitEditor
+                label="✏ CV (редактируйте markdown)"
+                value={cvMarkdown}
+                onChange={setCvMarkdown}
+                minHeight={300}
+              />
+            </>
+          )}
         </div>
 
         {/* Оценка стоимости/сроков (для фриланс и конкурса, только для владельца) */}

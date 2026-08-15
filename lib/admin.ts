@@ -5,6 +5,7 @@ function authHeaders(token: string): HeadersInit {
 }
 
 export type ApplicationKind = "vacancy" | "freelance" | "contest";
+export type ApplicationPlatform = "fl" | "kwork" | null;
 
 /** Общие поля отклика (для списка и деталей). */
 export interface Application {
@@ -26,6 +27,7 @@ export interface Application {
   rating: number | null;
   spec_text: string | null;
   estimate: string | null;
+  platform: ApplicationPlatform;
   created_at: string;
   published_at: string | null;
 }
@@ -59,6 +61,7 @@ export interface ApplicationDetail extends Application {
   cover_letter: string;
   generated_prompt: string | null;
   extra_instruction: string | null;
+  platform: ApplicationPlatform;
   interviews: Interview[];
   artifacts: Artifact[];
   last_click_at: string | null;
@@ -85,6 +88,7 @@ export interface ApplicationInput {
   estimate?: string;
   generated_prompt?: string;
   extra_instruction?: string;
+  platform?: ApplicationPlatform;
 }
 
 /** Поля отклика, которые можно обновить через PATCH. */
@@ -122,6 +126,7 @@ export async function generateCV(
     vacancy_text: string;
     selected_projects: string[];
     kind?: ApplicationKind;
+    platform?: ApplicationPlatform;
     spec_text?: string;
     extra_instruction?: string;
     temperature?: number;

@@ -258,6 +258,9 @@ export default function ApplicationDetail({ id }: { id: string }) {
               ● {data.status}
             </span>
             <span className="text-xs text-gray-400">{KIND_LABEL[data.kind] ?? data.kind}</span>
+            {data.platform === "kwork" && (
+              <span className="text-xs text-green-400">🟢 Kwork</span>
+            )}
             {data.rating ? (
               <span className="text-xs text-amber-400">
                 {"★".repeat(data.rating)}
