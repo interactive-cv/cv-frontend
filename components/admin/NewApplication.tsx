@@ -32,6 +32,7 @@ export default function NewApplication() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [chatUrl, setChatUrl] = useState("");
   const [budget, setBudget] = useState("");
+  const [budgetMax, setBudgetMax] = useState("");
   const [applicantCount, setApplicantCount] = useState("");
   const [deadline, setDeadline] = useState("");
   const [expectedTerm, setExpectedTerm] = useState("");
@@ -114,6 +115,8 @@ export default function NewApplication() {
         selected_projects: selectedProjects,
         kind,
         platform: isKwork ? "kwork" : undefined,
+        budget: budget || undefined,
+        budget_max: (isKwork && budgetMax) ? budgetMax : undefined,
         spec_text: specText || undefined,
         extra_instruction: extraInstruction || undefined,
         temperature,
@@ -165,6 +168,7 @@ export default function NewApplication() {
         source_url: sourceUrl || undefined,
         chat_url: chatUrl || undefined,
         budget: budget || undefined,
+        budget_max: budgetMax || undefined,
         applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
         deadline: deadline || undefined,
         expected_term: expectedTerm || undefined,
@@ -186,7 +190,8 @@ export default function NewApplication() {
               cv_markdown: cvMarkdown, slug: `${base}-${i}`, status,
               kind, platform: isKwork ? "kwork" : undefined,
               source_url: sourceUrl || undefined, chat_url: chatUrl || undefined,
-              budget: budget || undefined, applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
+              budget: budget || undefined,
+        budget_max: budgetMax || undefined, applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
               deadline: deadline || undefined, expected_term: expectedTerm || undefined,
               rating: rating || undefined, spec_text: specText || undefined,
               estimate: estimate || undefined,
@@ -382,16 +387,29 @@ export default function NewApplication() {
               <input
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
-                placeholder={isContest ? "Приз / бюджет конкурса" : "Бюджет (50 000 ₽)"}
+                placeholder={
+                  isKwork ? "Желаемый бюджет (₽)"
+                  : isContest ? "Приз / бюджет конкурса"
+                  : "Бюджет (50 000 ₽)"
+                }
                 className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
-              <input
-                value={applicantCount}
-                onChange={(e) => setApplicantCount(e.target.value)}
-                type="number"
-                placeholder={isContest ? "Участников конкурса" : "Конкурс (откликнулись)"}
-                className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+              {isKwork ? (
+                <input
+                  value={budgetMax}
+                  onChange={(e) => setBudgetMax(e.target.value)}
+                  placeholder="Допустимый бюджет (₽)"
+                  className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              ) : (
+                <input
+                  value={applicantCount}
+                  onChange={(e) => setApplicantCount(e.target.value)}
+                  type="number"
+                  placeholder={isContest ? "Участников конкурса" : "Конкурс (откликнулись)"}
+                  className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              )}
               <input
                 value={deadline}
                 onChange={(e) => setDeadline(e.target.value)}

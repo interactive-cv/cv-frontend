@@ -21,6 +21,7 @@ export interface Application {
   source_url: string | null;
   chat_url: string | null;
   budget: string | null;
+  budget_max: string | null;
   applicant_count: number | null;
   deadline: string | null;
   expected_term: string | null;
@@ -80,6 +81,7 @@ export interface ApplicationInput {
   source_url?: string;
   chat_url?: string;
   budget?: string;
+  budget_max?: string;
   applicant_count?: number;
   deadline?: string;
   expected_term?: string;
@@ -102,6 +104,7 @@ export interface ApplicationUpdate {
   source_url?: string;
   chat_url?: string;
   budget?: string;
+  budget_max?: string;
   applicant_count?: number;
   deadline?: string;
   expected_term?: string;
@@ -127,6 +130,8 @@ export async function generateCV(
     selected_projects: string[];
     kind?: ApplicationKind;
     platform?: ApplicationPlatform;
+    budget?: string;
+    budget_max?: string;
     spec_text?: string;
     extra_instruction?: string;
     temperature?: number;
