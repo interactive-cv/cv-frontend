@@ -94,7 +94,9 @@ export default function ApplicationList() {
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="font-semibold text-base">
-                      {KIND_BADGE[app.kind] ?? "📋"} {app.company ? `${app.company} — ` : ""}{app.role}
+                      {KIND_BADGE[app.kind] ?? "📋"}{" "}
+                      {app.platform === "kwork" && <span className="text-green-400 text-xs mr-1">🟢 Kwork</span>}
+                      {app.company ? `${app.company} — ` : ""}{app.role}
                     </div>
                     <div className="text-gray-500 text-xs mt-0.5">
                       {app.published_at
