@@ -53,10 +53,15 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
             set -e
+            # Тот же лок, что в backend deploy.yml: деплои двух репо
+            # сериализуются на хосте (concurrency-группы GitHub — per-repo).
+            exec 9>/tmp/libera_cv_deploy.lock
+            flock 9
             cd /home/deploy/libera_cv/cv-backend
             # Убираем осиротевшие контейнеры nextjs от предыдущих упавших деплоев.
             docker compose -f docker-compose.prod.yml rm -f -s nextjs 2>/dev/null || true
             docker compose -f docker-compose.prod.yml up -d --build nextjs
+            flock -u 9
           '
 
       - name: Smoke test
