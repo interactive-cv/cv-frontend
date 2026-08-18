@@ -129,8 +129,14 @@ export default function ApplicationDetail({ id }: { id: string }) {
     if (!token || !data) return;
     try {
       const result = await publishApplication(token, id);
-      setData({ ...data, status: "active", short_link_code: result.code });
-      setMsg(`✓ Опубликовано: ${result.url}`);
+      if (result.code) {
+        setData({ ...data, status: "active", short_link_code: result.code });
+        setMsg(`✓ Опубликовано: ${result.url}`);
+      } else {
+        // kwork: ссылка не создаётся, «Опубликовать» = отклик отправлен
+        setData({ ...data, status: "active" });
+        setMsg("✓ Отклик отмечен отправленным (для kwork публичная ссылка не создаётся)");
+      }
     } catch {
       setMsg("Ошибка публикации");
     }

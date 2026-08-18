@@ -213,7 +213,7 @@ export async function updateApplication(
 export async function publishApplication(
   token: string,
   id: string
-): Promise<{ code: string; url: string }> {
+): Promise<{ code: string | null; url: string | null }> {
   const res = await fetch(`${API}/api/admin/applications/${id}/publish`, {
     method: "POST",
     headers: authHeaders(token),
