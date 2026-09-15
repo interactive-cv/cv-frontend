@@ -4,6 +4,20 @@ function authHeaders(token: string): HeadersInit {
   return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
 }
 
+/** Не-2xx ответ API → Error с сообщением из тела {"message": ...}.
+ *  Бэкенд возвращает человекочитаемый диагноз (например, «это старый формат
+ *  .doc — пересохраните»); без этого хелпера UI показывал бы только «400». */
+async function httpError(res: Response): Promise<Error> {
+  let msg = `HTTP ${res.status}`;
+  try {
+    const body = await res.json();
+    if (body?.message) msg = `${body.message} (HTTP ${res.status})`;
+  } catch {
+    // тело не JSON — остаётся код статуса
+  }
+  return new Error(msg);
+}
+
 export type ApplicationKind = "vacancy" | "freelance" | "contest";
 export type ApplicationPlatform = "fl" | "kwork" | null;
 
@@ -116,7 +130,7 @@ export interface ApplicationUpdate {
 /** Список откликов с inline-аналитикой. */
 export async function listApplications(token: string): Promise<Application[]> {
   const res = await fetch(`${API}/api/admin/applications`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -142,7 +156,7 @@ export async function generateCV(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -167,7 +181,7 @@ export async function editChatStream(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res;
 }
 
@@ -181,7 +195,7 @@ export async function createApplication(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -191,7 +205,7 @@ export async function getApplication(
   id: string
 ): Promise<ApplicationDetail> {
   const res = await fetch(`${API}/api/admin/applications/${id}`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -206,7 +220,7 @@ export async function updateApplication(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
 }
 
 /** Опубликовать: создать короткую ссылку, status=active. */
@@ -218,7 +232,7 @@ export async function publishApplication(
     method: "POST",
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -228,7 +242,7 @@ export async function archiveApplication(token: string, id: string): Promise<voi
     method: "POST",
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
 }
 
 /** Полное удаление отклика со всеми артефактами. */
@@ -237,7 +251,7 @@ export async function deleteApplication(token: string, id: string): Promise<void
     method: "DELETE",
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
 }
 
 /** Загрузка файлов ТЗ (PDF/DOCX) → извлечение текста на бэкенде. */
@@ -259,7 +273,7 @@ export async function uploadSpecFiles(
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -278,7 +292,7 @@ export async function getVisitors(token: string, appId: string): Promise<Visitor
   const res = await fetch(`${API}/api/admin/applications/${appId}/visitors`, {
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -310,13 +324,13 @@ export interface ChatSessionDetail {
 
 export async function listChats(token: string): Promise<ChatSessionBrief[]> {
   const res = await fetch(`${API}/api/admin/chats`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
 export async function getChat(token: string, id: string): Promise<ChatSessionDetail> {
   const res = await fetch(`${API}/api/admin/chats/${id}`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -332,7 +346,7 @@ export async function createInterview(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -346,7 +360,7 @@ export async function updateInterview(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -355,12 +369,12 @@ export async function deleteInterview(token: string, interviewId: string): Promi
     method: "DELETE",
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
 }
 
 export async function getUpcoming(token: string): Promise<Interview[]> {
   const res = await fetch(`${API}/api/admin/upcoming`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -374,7 +388,7 @@ export async function uploadArtifact(token: string, appId: string, file: File): 
     headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -383,7 +397,7 @@ export async function deleteArtifact(token: string, artifactId: string): Promise
     method: "DELETE",
     headers: authHeaders(token),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
 }
 
 // ===== Instructions: лента доп. инструкций для переиспользования =====
@@ -399,7 +413,7 @@ export interface InstructionItem {
 
 export async function getInstructions(token: string): Promise<InstructionItem[]> {
   const res = await fetch(`${API}/api/admin/instructions`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -424,7 +438,7 @@ export interface Settings {
 /** Получить все настройки (5 ключей). */
 export async function getSettings(token: string): Promise<Settings> {
   const res = await fetch(`${API}/api/admin/settings`, { headers: authHeaders(token) });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -438,7 +452,7 @@ export async function updateSettings(
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -452,7 +466,7 @@ export async function previewMasterCvEdit(
     headers: authHeaders(token),
     body: JSON.stringify({ instruction }),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
 
@@ -466,6 +480,6 @@ export async function applyMasterCv(
     headers: authHeaders(token),
     body: JSON.stringify({ markdown }),
   });
-  if (!res.ok) throw new Error(`${res.status}`);
+  if (!res.ok) throw await httpError(res);
   return res.json();
 }
