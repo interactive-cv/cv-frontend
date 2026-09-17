@@ -517,7 +517,9 @@ export default function ApplicationDetail({ id }: { id: string }) {
         </pre>
       )}
 
-      {tab === "negotiation" && <NegotiationTab appId={id} />}
+      {tab === "negotiation" && (
+        <NegotiationTab appId={id} initialDraft={data.draft_reply ?? null} />
+      )}
 
       {tab === "interviews" && (
         <InterviewsTab
