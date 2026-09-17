@@ -45,6 +45,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
   const [tab, setTab] = useState<Tab>("cover");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [pdfBusy, setPdfBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [dirty, setDirty] = useState(false);
 
@@ -199,42 +200,45 @@ export default function ApplicationDetail({ id }: { id: string }) {
   }
 
   async function exportCvPdf() {
-    if (!data) return;
+    if (!data || pdfBusy) return;
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
+    setPdfBusy(true);
     try {
       const title = data.company ? `${data.company} — ${data.role}` : data.role;
       const blob = await exportPdfPreview(token, data.cv_markdown, title);
       downloadBlob(blob, data.company ? `CV_${data.company}_${data.role}.pdf` : `CV_${data.role}.pdf`);
+      setMsg("✓ PDF скачан");
+      setTimeout(() => setMsg(""), 2000);
     } catch (e) {
       setMsg(`Ошибка PDF: ${(e as Error).message}`);
+    } finally {
+      setPdfBusy(false);
     }
   }
 
   async function downloadPdf() {
-    if (!data) return;
+    if (!data || pdfBusy) return;
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
     const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    setPdfBusy(true);
     try {
       const res = await fetch(`${API}/api/admin/applications/${id}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
       const fname = data?.company
         ? `CV_${data.company}_${data.role}.pdf`
         : `CV_${data.role}.pdf`;
-      a.download = fname.replace(/[/\\]/g, "-").replace(/\s+/g, "_");
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      downloadBlob(blob, fname);
+      setMsg("✓ PDF скачан");
+      setTimeout(() => setMsg(""), 2000);
     } catch (e) {
       setMsg(`Ошибка PDF: ${(e as Error).message}`);
+    } finally {
+      setPdfBusy(false);
     }
   }
 
@@ -324,9 +328,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
           </button>
           <button
             onClick={downloadPdf}
-            className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
+            disabled={pdfBusy}
+            className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
           >
-            📄 Скачать PDF
+            {pdfBusy ? "⏳ Генерация…" : "📄 Скачать PDF"}
           </button>
           {data.short_link_code && (
             <button
@@ -420,9 +425,10 @@ export default function ApplicationDetail({ id }: { id: string }) {
             </button>
             <button
               onClick={exportCvPdf}
-              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+              disabled={pdfBusy}
+              className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             >
-              📄 В PDF
+              {pdfBusy ? "⏳ Генерация…" : "📄 В PDF"}
             </button>
           </div>
         </div>
