@@ -12,6 +12,8 @@ type Message = { role: "user" | "assistant"; content: string };
  * Возвращает то, что уже успело прийти (partial).
  */
 function parsePartialResponse(text: string): { cv: string | null; cover: string | null } {
+  // Смешанный режим: ассистент может прислать только CV, только COVER,
+  // оба — или чистый текст (ответ на вопрос, тексты не трогаем).
   let cv: string | null = null;
   let cover: string | null = null;
 
@@ -19,12 +21,14 @@ function parsePartialResponse(text: string): { cv: string | null; cover: string 
     const afterCv = text.split("===CV===")[1];
     if (afterCv.includes("===COVER===")) {
       cv = afterCv.split("===COVER===")[0].trim();
-      const afterCover = afterCv.split("===COVER===")[1];
-      cover = afterCover.split("===END===")[0].trim();
     } else {
-      // CV ещё стримится, COVER не пришёл
-      cv = afterCv.trim();
+      cv = afterCv.split("===END===")[0].trim();
     }
+  }
+
+  if (text.includes("===COVER===")) {
+    const afterCover = text.split("===COVER===")[1];
+    cover = afterCover.split("===END===")[0].trim();
   }
 
   return { cv, cover };
@@ -174,7 +178,7 @@ export default function EditChat({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Инструкция для AI..."
+          placeholder="Спросите («какой стек предложить?») или скомандуйте правку («перепиши отклик короче», «убери 1С»)..."
           disabled={streaming}
           className="w-full bg-gray-800 rounded-lg px-2.5 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[40px] max-h-[100px]"
           rows={2}

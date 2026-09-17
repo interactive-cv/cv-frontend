@@ -105,6 +105,7 @@ export interface ApplicationDetail extends Application {
   extra_instruction: string | null;
   platform: ApplicationPlatform;
   interviews: Interview[];
+  draft_reply?: string | null;
   artifacts: Artifact[];
   last_click_at: string | null;
 }
@@ -586,6 +587,83 @@ export async function suggestReplyStream(
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(data),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res;
+}
+
+// ===== Assistant: тред владельца с LLM по отклику =====
+
+export type AssistantRole = "user" | "assistant";
+
+export interface AssistantMessage {
+  id: string;
+  role: AssistantRole;
+  content: string;
+  created_at: string;
+}
+
+export async function listAssistantMessages(
+  token: string,
+  appId: string
+): Promise<AssistantMessage[]> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/assistant-messages`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res.json();
+}
+
+/** Сохранить ответ ассистента после завершения стрима. */
+export async function saveAssistantMessage(
+  token: string,
+  appId: string,
+  content: string
+): Promise<void> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/assistant-messages`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ content }),
+  });
+  if (!res.ok) throw await httpError(res);
+}
+
+export async function clearAssistantThread(
+  token: string,
+  appId: string
+): Promise<void> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/assistant-messages`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw await httpError(res);
+}
+
+/** Автосохранение черновика ответа заказчику. */
+export async function saveDraftReply(
+  token: string,
+  appId: string,
+  draft: string
+): Promise<void> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/draft-reply`, {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify({ draft }),
+  });
+  if (!res.ok) throw await httpError(res);
+}
+
+/** Сообщение в тред ассистента — стриминг glm (контекст собирает бэкенд).
+ *  Ответ может содержать ===DRAFT===...===END=== — текст для заказчика. */
+export async function assistantChatStream(
+  token: string,
+  appId: string,
+  message: string
+): Promise<Response> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/assistant-chat`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ message }),
   });
   if (!res.ok) throw await httpError(res);
   return res;
