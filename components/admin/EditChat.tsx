@@ -35,6 +35,7 @@ export default function EditChat({
   coverLetter,
   kind,
   vacancyText,
+  coverLimit,
   onCvChange,
   onCoverChange,
 }: {
@@ -42,6 +43,7 @@ export default function EditChat({
   coverLetter: string;
   kind: ApplicationKind;
   vacancyText: string;
+  coverLimit?: number;
   onCvChange: (v: string) => void;
   onCoverChange: (v: string) => void;
 }) {
@@ -77,6 +79,7 @@ export default function EditChat({
         vacancy_text: vacancyText,
         history: newMessages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
         temperature: 0.6,
+        cover_limit: coverLimit,
       });
 
       const reader = res.body!.getReader();

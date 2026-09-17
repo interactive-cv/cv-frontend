@@ -176,6 +176,7 @@ export async function generateCV(
     spec_text?: string;
     extra_instruction?: string;
     temperature?: number;
+    cover_limit?: number;
   }
 ): Promise<{ cv_markdown: string; cover_letter: string; estimate: string | null; prompt: string }> {
   const res = await fetch(`${API}/api/admin/applications/generate`, {
@@ -201,6 +202,7 @@ export async function editChatStream(
     vacancy_text?: string;
     history?: { role: string; content: string }[];
     temperature?: number;
+    cover_limit?: number;
   }
 ): Promise<Response> {
   const res = await fetch(`${API}/api/admin/applications/edit-chat`, {
