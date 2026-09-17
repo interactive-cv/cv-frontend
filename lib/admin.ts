@@ -18,6 +18,33 @@ async function httpError(res: Response): Promise<Error> {
   return new Error(msg);
 }
 
+/** Скачивает blob как файл (PDF-экспорт). */
+export function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename.replace(/[/\\]/g, "-").replace(/\s+/g, "_");
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/** PDF из текущего содержимого редактора CV (включая несохранённые правки). */
+export async function exportPdfPreview(
+  token: string,
+  markdown: string,
+  title?: string
+): Promise<Blob> {
+  const res = await fetch(`${API}/api/admin/pdf/preview`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify({ markdown, title }),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res.blob();
+}
+
 export type ApplicationKind = "vacancy" | "freelance" | "contest";
 export type ApplicationPlatform = "fl" | "kwork" | null;
 

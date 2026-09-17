@@ -7,6 +7,8 @@ import {
   createInterview,
   deleteApplication,
   deleteInterview,
+  downloadBlob,
+  exportPdfPreview,
   getApplication,
   getVisitors,
   publishApplication,
@@ -194,6 +196,19 @@ export default function ApplicationDetail({ id }: { id: string }) {
     navigator.clipboard.writeText(`${siteUrl}/${data.short_link_code}`);
     setMsg("✓ Ссылка скопирована");
     setTimeout(() => setMsg(""), 2000);
+  }
+
+  async function exportCvPdf() {
+    if (!data) return;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      const title = data.company ? `${data.company} — ${data.role}` : data.role;
+      const blob = await exportPdfPreview(token, data.cv_markdown, title);
+      downloadBlob(blob, data.company ? `CV_${data.company}_${data.role}.pdf` : `CV_${data.role}.pdf`);
+    } catch (e) {
+      setMsg(`Ошибка PDF: ${(e as Error).message}`);
+    }
   }
 
   async function downloadPdf() {
@@ -395,13 +410,21 @@ export default function ApplicationDetail({ id }: { id: string }) {
             }}
             minHeight={350}
           />
-          <button
-            onClick={saveEdits}
-            disabled={saving}
-            className="mt-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            {saving ? "Сохранение..." : "Сохранить"}
-          </button>
+          <div className="flex gap-3 mt-3">
+            <button
+              onClick={saveEdits}
+              disabled={saving}
+              className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              {saving ? "Сохранение..." : "Сохранить"}
+            </button>
+            <button
+              onClick={exportCvPdf}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              📄 В PDF
+            </button>
+          </div>
         </div>
       )}
 

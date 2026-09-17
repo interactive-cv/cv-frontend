@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { generateCV, createApplication, uploadSpecFiles, type ApplicationKind } from "@/lib/admin";
+import {
+  generateCV,
+  createApplication,
+  uploadSpecFiles,
+  downloadBlob,
+  exportPdfPreview,
+  type ApplicationKind,
+} from "@/lib/admin";
 import { getProjects } from "@/lib/api";
 import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
@@ -129,6 +136,18 @@ export default function NewApplication() {
     } catch (e) {
       setError(`Ошибка генерации: ${(e as Error).message}`);
       setPhase("form");
+    }
+  }
+
+  async function exportCvPdf() {
+    if (!cvMarkdown.trim()) return;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      const blob = await exportPdfPreview(token, cvMarkdown, role);
+      downloadBlob(blob, company ? `CV_${company}_${role}.pdf` : `CV_${role}.pdf`);
+    } catch (e) {
+      setError(`Ошибка PDF: ${(e as Error).message}`);
     }
   }
 
@@ -614,6 +633,15 @@ export default function NewApplication() {
           >
             ← Назад (изменить данные)
           </button>
+          {!isKwork && (
+            <button
+              onClick={exportCvPdf}
+              disabled={!cvMarkdown.trim()}
+              className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            >
+              📄 CV в PDF
+            </button>
+          )}
           <button
             onClick={handleCancel}
             className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors"
