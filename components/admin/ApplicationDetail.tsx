@@ -253,6 +253,8 @@ export default function ApplicationDetail({ id }: { id: string }) {
 
   const isFreelance = data.kind === "freelance";
   const isContest = data.kind === "contest";
+  // Лимит символов отклика на площадке: Kwork — 2000 (жёсткий), FL.ru — 5000.
+  const coverLimit = data.platform === "kwork" ? 2000 : 5000;
   const isFreelanceLike = isFreelance || isContest;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com";
 
@@ -445,10 +447,22 @@ export default function ApplicationDetail({ id }: { id: string }) {
             }}
             minHeight={200}
           />
+          <div className="flex justify-between items-center mt-1 mb-3">
+            <span />
+            <span
+              className={`text-xs ${
+                data.cover_letter.length > coverLimit
+                  ? "text-red-400 font-medium"
+                  : "text-gray-500"
+              }`}
+            >
+              {data.cover_letter.length} / {coverLimit}
+            </span>
+          </div>
           <button
             onClick={saveEdits}
             disabled={saving}
-            className="mt-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="mt-0 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             {saving ? "Сохранение..." : "Сохранить"}
           </button>

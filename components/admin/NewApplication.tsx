@@ -67,6 +67,8 @@ export default function NewApplication() {
   // Конкурс разделяет с фрилансом поля: ТЗ, бюджет, дедлайн, участников, estimate.
   const isFreelanceLike = isFreelance || isContest;
   const isKwork = platform === "kwork";
+  // Лимит символов отклика на площадке: Kwork — 2000 (жёсткий), FL.ru — 5000.
+  const coverLimit = isKwork ? 2000 : 5000;
 
   async function handleSpecUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
@@ -129,6 +131,7 @@ export default function NewApplication() {
         spec_text: specText || undefined,
         extra_instruction: extraInstruction || undefined,
         temperature,
+        cover_limit: coverLimit,
       });
       setCvMarkdown(result.cv_markdown);
       setCoverLetter(result.cover_letter);
@@ -584,8 +587,8 @@ export default function NewApplication() {
             <div>
               <div className="flex justify-between items-center mb-1">
                 <span className="text-xs text-gray-500">✏ Отклик для Kwork (только текст, без ссылок)</span>
-                <span className={`text-xs ${coverLetter.length < 150 ? "text-red-400" : coverLetter.length > 2000 ? "text-red-400" : "text-gray-500"}`}>
-                  {coverLetter.length} / 2000 {coverLetter.length < 150 && "(мин. 150)"}
+                <span className={`text-xs ${coverLetter.length < 150 || coverLetter.length > coverLimit ? "text-red-400" : "text-gray-500"}`}>
+                  {coverLetter.length} / {coverLimit} {coverLetter.length < 150 && "(мин. 150)"}
                 </span>
               </div>
               <textarea
@@ -596,12 +599,19 @@ export default function NewApplication() {
             </div>
           ) : (
             <>
-              <SplitEditor
-                label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
-                value={coverLetter}
-                onChange={setCoverLetter}
-                minHeight={150}
-              />
+              <div>
+                <SplitEditor
+                  label="✏ Cover letter / отклик (плейн-текст для копипаста в Telegram/email)"
+                  value={coverLetter}
+                  onChange={setCoverLetter}
+                  minHeight={150}
+                />
+                <div className="flex justify-end mt-1">
+                  <span className={`text-xs ${coverLetter.length > coverLimit ? "text-red-400 font-medium" : "text-gray-500"}`}>
+                    {coverLetter.length} / {coverLimit}
+                  </span>
+                </div>
+              </div>
               <SplitEditor
                 label="✏ CV (редактируйте markdown)"
                 value={cvMarkdown}
@@ -666,6 +676,7 @@ export default function NewApplication() {
           coverLetter={coverLetter}
           kind={kind}
           vacancyText={vacancyText}
+          coverLimit={coverLimit}
           onCvChange={setCvMarkdown}
           onCoverChange={setCoverLetter}
         />
