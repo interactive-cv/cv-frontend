@@ -195,3 +195,10 @@ html.light ::-webkit-scrollbar-thumb:hover {
   animation: online-dot 1.5s infinite;
 }
 
+
+/* Админка (.admin-press в AdminShell): тактильный отклик кнопок —
+   мгновенное «вдавливание» при нажатии. Без анимации transition,
+   чтобы не конфликтовать с tailwind-классами transition-colors. */
+.admin-press button:active:not(:disabled) {
+  transform: scale(0.97);
+}

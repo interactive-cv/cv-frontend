@@ -23,6 +23,8 @@ export default function NewApplication() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("form");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   // Тип отклика и платформа
   const [kind, setKind] = useState<ApplicationKind>("freelance");
@@ -140,14 +142,19 @@ export default function NewApplication() {
   }
 
   async function exportCvPdf() {
-    if (!cvMarkdown.trim()) return;
+    if (!cvMarkdown.trim() || pdfBusy) return;
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
+    setPdfBusy(true);
     try {
       const blob = await exportPdfPreview(token, cvMarkdown, role);
       downloadBlob(blob, company ? `CV_${company}_${role}.pdf` : `CV_${role}.pdf`);
+      setNotice("✓ PDF скачан");
+      setTimeout(() => setNotice(""), 2000);
     } catch (e) {
       setError(`Ошибка PDF: ${(e as Error).message}`);
+    } finally {
+      setPdfBusy(false);
     }
   }
 
@@ -636,12 +643,13 @@ export default function NewApplication() {
           {!isKwork && (
             <button
               onClick={exportCvPdf}
-              disabled={!cvMarkdown.trim()}
+              disabled={!cvMarkdown.trim() || pdfBusy}
               className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
             >
-              📄 CV в PDF
+              {pdfBusy ? "⏳ Генерация…" : "📄 CV в PDF"}
             </button>
           )}
+          {notice && <span className="text-green-500 text-sm self-center">{notice}</span>}
           <button
             onClick={handleCancel}
             className="bg-gray-800 hover:bg-gray-700 text-gray-400 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors"

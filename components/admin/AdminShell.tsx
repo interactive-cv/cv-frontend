@@ -38,7 +38,7 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
   ];
 
   return (
-    <div className="h-screen flex bg-background text-foreground overflow-hidden">
+    <div className="admin-press h-screen flex bg-background text-foreground overflow-hidden">
       {/* Sidebar — фиксированный, не прокручивается */}
       <aside className="w-56 border-r border-gray-800 p-4 flex flex-col gap-1 shrink-0 h-full overflow-y-auto">
         <div className="flex items-center justify-between mb-6 px-2">
