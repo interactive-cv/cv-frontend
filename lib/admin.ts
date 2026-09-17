@@ -512,3 +512,81 @@ export async function applyMasterCv(
   if (!res.ok) throw await httpError(res);
   return res.json();
 }
+
+// ===== Negotiation: переговоры с заказчиком =====
+
+export type NegotiationRole = "customer" | "me";
+export type NegotiationChannel = "fl" | "telegram" | "email";
+
+export interface NegotiationMessage {
+  id: string;
+  role: NegotiationRole;
+  channel: NegotiationChannel;
+  content: string;
+  created_at: string;
+}
+
+export async function listNegotiation(
+  token: string,
+  appId: string
+): Promise<NegotiationMessage[]> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/negotiation`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res.json();
+}
+
+export async function addNegotiationMessage(
+  token: string,
+  appId: string,
+  data: { role: NegotiationRole; channel: NegotiationChannel; content: string }
+): Promise<NegotiationMessage> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/negotiation`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res.json();
+}
+
+export async function updateNegotiationMessage(
+  token: string,
+  messageId: string,
+  data: { content?: string; channel?: NegotiationChannel }
+): Promise<NegotiationMessage> {
+  const res = await fetch(`${API}/api/admin/negotiation/${messageId}`, {
+    method: "PUT",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res.json();
+}
+
+export async function deleteNegotiationMessage(
+  token: string,
+  messageId: string
+): Promise<void> {
+  const res = await fetch(`${API}/api/admin/negotiation/${messageId}`, {
+    method: "DELETE",
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw await httpError(res);
+}
+
+/** Черновик ответа заказчику — стриминг glm (контекст собирает бэкенд). */
+export async function suggestReplyStream(
+  token: string,
+  appId: string,
+  data: { instruction?: string }
+): Promise<Response> {
+  const res = await fetch(`${API}/api/admin/applications/${appId}/suggest-reply`, {
+    method: "POST",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res;
+}

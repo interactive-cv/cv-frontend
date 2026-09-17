@@ -23,9 +23,10 @@ import { TOKEN_KEY } from "./AdminLogin";
 import SplitEditor from "./SplitEditor";
 import VisitorsTooltip from "./VisitorsTooltip";
 import InterviewsTab from "./InterviewsTab";
+import NegotiationTab from "./NegotiationTab";
 import ArtifactsTab from "./ArtifactsTab";
 
-type Tab = "cover" | "cv" | "estimate" | "vacancy" | "interviews" | "artifacts" | "details" | "analytics";
+type Tab = "cover" | "cv" | "estimate" | "vacancy" | "negotiation" | "interviews" | "artifacts" | "details" | "analytics";
 
 const STATUS_DOT: Record<string, string> = {
   active: "#22c55e",
@@ -263,6 +264,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
     { id: "estimate", label: "💰 Оценка" },
     { id: "cv", label: "📄 CV" },
     { id: "vacancy", label: isContest ? "📋 Конкурс" : isFreelance ? "📋 Заказ" : "📋 Вакансия" },
+    { id: "negotiation", label: "💬 Диалог" },
     { id: "interviews", label: "📅 Собеседования" },
     { id: "artifacts", label: "📦 Артефакты" },
     { id: "details", label: "⚙ Детали" },
@@ -490,6 +492,8 @@ export default function ApplicationDetail({ id }: { id: string }) {
           {data.vacancy_text}
         </pre>
       )}
+
+      {tab === "negotiation" && <NegotiationTab appId={id} />}
 
       {tab === "interviews" && (
         <InterviewsTab
