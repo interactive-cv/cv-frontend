@@ -243,6 +243,24 @@ export default function ApplicationDetail({ id }: { id: string }) {
     }
   }
 
+  async function exportZip() {
+    if (!data) return;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+      const res = await fetch(`${API}/api/admin/applications/${id}/export.zip`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      downloadBlob(await res.blob(), `${data.slug}-export.zip`);
+      setMsg("✓ ZIP скачан");
+      setTimeout(() => setMsg(""), 2500);
+    } catch (e) {
+      setMsg(`Ошибка экспорта: ${(e as Error).message}`);
+    }
+  }
+
   function setRating(r: number) {
     if (!data) return;
     setData({ ...data, rating: r === data.rating ? 0 : r });
@@ -336,6 +354,12 @@ export default function ApplicationDetail({ id }: { id: string }) {
             className="bg-gray-700 hover:bg-gray-600 disabled:opacity-50 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
           >
             {pdfBusy ? "⏳ Генерация…" : "📄 Скачать PDF"}
+          </button>
+          <button
+            onClick={exportZip}
+            className="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded-lg text-xs transition-colors"
+          >
+            📦 Экспорт ZIP
           </button>
           {data.short_link_code && (
             <button
