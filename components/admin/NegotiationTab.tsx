@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   addNegotiationMessage,
+  uploadArtifact,
   deleteNegotiationMessage,
   listNegotiation,
   saveDraftReply,
@@ -85,6 +86,34 @@ export default function NegotiationTab({
       const token = localStorage.getItem(TOKEN_KEY);
       if (token) saveDraftReply(token, appId, v).catch(() => {});
     }, 1500);
+  }
+
+  async function attachFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    setError("");
+    const okNames: string[] = [];
+    for (const f of Array.from(fileList)) {
+      try {
+        await uploadArtifact(token, appId, f);
+        okNames.push(f.name);
+      } catch (err) {
+        setError(`${f.name}: ${(err as Error).message}`);
+      }
+    }
+    if (okNames.length > 0) {
+      // Метка в ленту — LLM-контекст видит, что заказчик прислал файлы
+      await addNegotiationMessage(token, appId, {
+        role: "customer",
+        channel: customerChannel,
+        content: `📎 Файлы от заказчика: ${okNames.join(", ")} (смотри вкладку «Артефакты»)`,
+      });
+      flashNotice(`✓ ${okNames.length} файл(ов) в артефактах`);
+      await reload();
+    }
+    e.target.value = "";
   }
 
   async function addCustomerMessage() {
@@ -221,6 +250,18 @@ export default function NegotiationTab({
               >
                 Добавить в ленту
               </button>
+              <label
+                title="Файлы от заказчика — сохранить в артефакты заявки"
+                className="text-xs px-2.5 py-1.5 rounded-lg border bg-gray-800 border-gray-700 text-gray-400 hover:text-white cursor-pointer transition-colors"
+              >
+                📎
+                <input
+                  type="file"
+                  multiple
+                  onChange={attachFiles}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
 

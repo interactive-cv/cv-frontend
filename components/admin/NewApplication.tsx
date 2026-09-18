@@ -6,6 +6,9 @@ import {
   generateCV,
   createApplication,
   uploadSpecFiles,
+  uploadFiles,
+  deleteStagedUpload,
+  type StagedUpload,
   downloadBlob,
   exportPdfPreview,
   type ApplicationKind,
@@ -49,6 +52,7 @@ export default function NewApplication() {
 
   // ТЗ заказа (из PDF или вставленное вручную)
   const [specText, setSpecText] = useState("");
+  const [stagedFiles, setStagedFiles] = useState<StagedUpload[]>([]);
   const [specLoading, setSpecLoading] = useState(false);
   const [specError, setSpecError] = useState("");
 
@@ -79,21 +83,40 @@ export default function NewApplication() {
     setSpecLoading(true);
     setSpecError("");
     try {
-      const result = await uploadSpecFiles(token, files);
-      // Если уже есть текст — добавляем, иначе заменяем
-      setSpecText((prev) =>
-        prev.trim()
-          ? prev + "\n\n---\n\n" + result.spec_text
-          : result.spec_text
-      );
-      if (result.errors.length > 0) {
-        setSpecError(`Часть файлов не обработана: ${result.errors.join("; ")}`);
+      // Любые типы: файлы сохраняются сразу (привяжутся к заявке при
+      // сохранении), текст извлекается best-effort (pdf/docx/txt).
+      const uploaded = await uploadFiles(token, files);
+      setStagedFiles((prev) => [...prev, ...uploaded]);
+      const texts = uploaded
+        .filter((u) => u.text)
+        .map((u) => `=== ${u.filename} ===\n${u.text}`);
+      if (texts.length > 0) {
+        setSpecText((prev) =>
+          prev.trim() ? prev + "\n\n---\n\n" + texts.join("\n\n---\n\n") : texts.join("\n\n---\n\n")
+        );
+      }
+      const problems = uploaded.filter((u) => u.error);
+      if (problems.length > 0) {
+        setSpecError(
+          `Сохранено, но текст не извлечён: ${problems.map((u) => `${u.filename} (${u.error})`).join("; ")}`
+        );
       }
     } catch (err) {
       setSpecError(`Ошибка загрузки: ${(err as Error).message}`);
     } finally {
       setSpecLoading(false);
       e.target.value = ""; // сбросить input чтобы можно было загрузить те же файлы снова
+    }
+  }
+
+  async function removeStagedFile(u: StagedUpload) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token || !u.id) return;
+    try {
+      await deleteStagedUpload(token, u.id);
+      setStagedFiles((prev) => prev.filter((f) => f.id !== u.id));
+    } catch (e) {
+      setSpecError(`Не удалось убрать файл: ${(e as Error).message}`);
     }
   }
 
@@ -206,6 +229,7 @@ export default function NewApplication() {
         estimate: estimate || undefined,
         generated_prompt: generatedPrompt || undefined,
         extra_instruction: extraInstruction || undefined,
+        uploads: stagedFiles.filter((f) => f.id).map((f) => f.id),
       });
       router.push(`/admin/${result.id}`);
     } catch (e) {
@@ -226,6 +250,7 @@ export default function NewApplication() {
               estimate: estimate || undefined,
               generated_prompt: generatedPrompt || undefined,
         extra_instruction: extraInstruction || undefined,
+        uploads: stagedFiles.filter((f) => f.id).map((f) => f.id),
             });
             router.push(`/admin/${result2.id}`);
             return;
@@ -379,10 +404,9 @@ export default function NewApplication() {
                 ТЗ {isContest ? "конкурса" : "заказа"} {isFreelanceLike ? "(повысит релевантность отклика)" : "(необязательно)"}
               </span>
               <label className="text-xs px-2.5 py-1 rounded-lg border bg-gray-800 border-gray-700 text-gray-400 hover:text-white cursor-pointer transition-colors">
-                📎 Загрузить ТЗ (PDF/DOCX)
+                📎 Приложить файлы (любые)
                 <input
                   type="file"
-                  accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                   multiple
                   onChange={handleSpecUpload}
                   className="hidden"
@@ -395,6 +419,29 @@ export default function NewApplication() {
             )}
             {specError && (
               <p className="text-xs text-red-400 mb-2">{specError}</p>
+            )}
+            {stagedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {stagedFiles.map((u) => (
+                  <span
+                    key={u.id}
+                    title={u.error ?? (u.text ? `Текст извлечён (${u.text.length} симв.)` : "Сохранён без извлечения текста")}
+                    className="inline-flex items-center gap-1 text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1"
+                  >
+                    {u.text ? "📄" : u.error ? "⚠️" : "📦"} {u.filename}
+                    {u.id && (
+                      <button
+                        type="button"
+                        onClick={() => removeStagedFile(u)}
+                        className="text-gray-500 hover:text-red-400"
+                        title="Убрать файл (текст в поле ТЗ останется)"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </span>
+                ))}
+              </div>
             )}
             {specText && (
               <div className="text-xs text-gray-500 mb-1">
