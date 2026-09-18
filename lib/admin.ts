@@ -133,6 +133,8 @@ export interface ApplicationInput {
   generated_prompt?: string;
   extra_instruction?: string;
   platform?: ApplicationPlatform;
+  /** Staged-загрузки (POST /uploads) — привязать к создаваемой заявке. */
+  uploads?: string[];
 }
 
 /** Поля отклика, которые можно обновить через PATCH. */
@@ -667,4 +669,42 @@ export async function assistantChatStream(
   });
   if (!res.ok) throw await httpError(res);
   return res;
+}
+
+// ===== Staged uploads: файлы до создания заявки =====
+
+export interface StagedUpload {
+  id: string;
+  filename: string;
+  size_bytes: number;
+  text: string | null;
+  error: string | null;
+}
+
+/** Загрузка файлов (любых) до создания заявки: сохраняются сразу,
+ *  текст извлекается best-effort (pdf/docx/txt). */
+export async function uploadFiles(
+  token: string,
+  files: File[]
+): Promise<StagedUpload[]> {
+  const formData = new FormData();
+  for (const f of files) formData.append("files", f);
+  const res = await fetch(`${API}/api/admin/uploads`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  });
+  if (!res.ok) throw await httpError(res);
+  return res.json();
+}
+
+export async function deleteStagedUpload(
+  token: string,
+  uploadId: string
+): Promise<void> {
+  const res = await fetch(`${API}/api/admin/uploads/${uploadId}`, {
+    method: "DELETE",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw await httpError(res);
 }
