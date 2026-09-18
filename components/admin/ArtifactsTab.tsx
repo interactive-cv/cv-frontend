@@ -24,26 +24,29 @@ export default function ArtifactsTab({
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
     setUploading(true);
     setError("");
-    try {
-      await uploadArtifact(token, appId, file);
-      onChanged();
-    } catch (err) {
-      const msg = (err as Error).message;
-      if (msg.includes("400")) {
-        setError("Файл слишком большой (макс. 100 MB)");
-      } else {
-        setError(`Ошибка загрузки: ${msg}`);
+    let lastError = "";
+    let okCount = 0;
+    for (const file of Array.from(files)) {
+      try {
+        await uploadArtifact(token, appId, file);
+        okCount++;
+      } catch (err) {
+        const msg = (err as Error).message;
+        lastError = msg.includes("400")
+          ? `${file.name}: файл слишком большой (макс. 100 MB)`
+          : `${file.name}: ${msg}`;
       }
-    } finally {
-      setUploading(false);
-      e.target.value = "";
     }
+    if (lastError) setError(lastError);
+    if (okCount > 0) onChanged();
+    setUploading(false);
+    e.target.value = "";
   }
 
   async function handleDelete(id: string, filename: string) {
@@ -72,11 +75,12 @@ export default function ArtifactsTab({
       {/* Загрузка */}
       <div className="bg-gray-900 rounded-xl p-4 border border-gray-800">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold text-gray-300">📁 Артефакты конкурса</h3>
+          <h3 className="text-sm font-semibold text-gray-300">📁 Файлы заявки</h3>
           <label className="text-xs px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white cursor-pointer transition-colors">
-            {uploading ? "Загрузка..." : "📎 Загрузить файл"}
+            {uploading ? "Загрузка..." : "📎 Загрузить файлы"}
             <input
               type="file"
+              multiple
               onChange={handleUpload}
               className="hidden"
               disabled={uploading}
@@ -84,8 +88,9 @@ export default function ArtifactsTab({
           </label>
         </div>
         <p className="text-xs text-gray-500">
-          APK, видео, архивы с исходниками. Лимит 100 MB.
-          Файлы доступны публично по ссылке, пока отклик активен.
+          ТЗ, файлы заказчика, конкурсные работы, архивы — любые файлы
+          заявки. Лимит 100 MB каждый. Доступны публично по ссылке,
+          пока отклик активен.
         </p>
       </div>
 
