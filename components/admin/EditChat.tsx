@@ -61,7 +61,7 @@ export default function EditChat({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamText]);
 
-  async function handleSend() {
+  async function handleSend(mode: "chat" | "edit") {
     const instruction = input.trim();
     if (!instruction || streaming) return;
     const token = localStorage.getItem(TOKEN_KEY);
@@ -84,6 +84,7 @@ export default function EditChat({
         history: newMessages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
         temperature: 0.6,
         cover_limit: coverLimit,
+        mode,
       });
 
       const reader = res.body!.getReader();
@@ -96,22 +97,31 @@ export default function EditChat({
         acc += dec.decode(value);
         setStreamText(acc);
 
-        // Парсим накопленный текст — обновляем редакторы live
-        const { cv, cover } = parsePartialResponse(acc);
-        if (cv !== null) onCvChange(cv);
-        if (cover !== null) onCoverChange(cover);
+        // В режиме правки парсим накопленный текст — редакторы live
+        if (mode === "edit") {
+          const { cv, cover } = parsePartialResponse(acc);
+          if (cv !== null) onCvChange(cv);
+          if (cover !== null) onCoverChange(cover);
+        }
       }
 
-      // Готово — добавляем краткий статус AI
-      const { cv: finalCv, cover: finalCover } = parsePartialResponse(acc);
-      const statusParts: string[] = [];
-      if (finalCv !== null) statusParts.push("CV");
-      if (finalCover !== null) statusParts.push("cover letter");
-      const status = statusParts.length > 0
-        ? `✓ Обновил: ${statusParts.join(" + ")}`
-        : "✓ Готово";
+      let reply: string;
+      if (mode === "edit") {
+        const { cv: finalCv, cover: finalCover } = parsePartialResponse(acc);
+        const parts: string[] = [];
+        if (finalCv !== null) parts.push(`CV (${finalCv.length} симв.)`);
+        if (finalCover !== null) parts.push(`отклик (${finalCover.length} симв.)`);
+        const note = acc.split("===CV===")[0].split("===COVER===")[0].trim();
+        reply = parts.length > 0
+          ? `✅ Применено: ${parts.join(", ")}${note ? `
+${note}` : ""}`
+          : `⚠ Правка не распознана (нет маркеров). Ответ:
+${acc.trim()}`;
+      } else {
+        reply = acc.trim() || "(пустой ответ)";
+      }
 
-      setMessages((prev) => [...prev, { role: "assistant", content: status }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: reply }]);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -126,7 +136,7 @@ export default function EditChat({
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSend();
+      handleSend("chat");
     }
   }
 
@@ -134,9 +144,9 @@ export default function EditChat({
     <div className="w-80 shrink-0 flex flex-col h-full bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
       {/* Заголовок */}
       <div className="px-3 py-2 border-b border-gray-800 shrink-0">
-        <h3 className="text-sm font-semibold text-gray-300">💬 AI-правка</h3>
+        <h3 className="text-sm font-semibold text-gray-300">💬 Диалог с ИИ</h3>
         <p className="text-[10px] text-gray-600 mt-0.5">
-          Точечные правки без перегенерации
+          Спрашивайте и обсуждайте. Правка текстов — кнопкой «✏️ Применить»
         </p>
       </div>
 
@@ -144,9 +154,9 @@ export default function EditChat({
       <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
         {messages.length === 0 && !streaming && (
           <p className="text-xs text-gray-600 text-center mt-4">
-            Напишите инструкцию — например:<br />
-            «убери 1С», «сократи summary»,<br />
-            «добавь про PostgreSQL»
+            Спросите: «что подчеркнуть в отклике?»<br />
+            или обсудите: «какой стек предложить?»<br />
+            Правки — «✏️ Применить»: «убери 1С»,
           </p>
         )}
         {messages.map((msg, i) => (
@@ -165,7 +175,7 @@ export default function EditChat({
         {/* Стриминг — краткий индикатор */}
         {streaming && (
           <div className="text-xs text-gray-500 animate-pulse">
-            ⏳ Редактирую{streamText.includes("===CV===") ? " — CV обновляется..." : "..."}
+            ⏳ {streamText.includes("===CV===") || streamText.includes("===COVER===") ? "Применяю правку..." : "Думает..."}
           </div>
         )}
 
@@ -178,18 +188,28 @@ export default function EditChat({
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Спросите («какой стек предложить?») или скомандуйте правку («перепиши отклик короче», «убери 1С»)..."
+          placeholder="Вопрос («что подчеркнуть?») или команда правки («убери 1С», «перепиши короче»)…"
           disabled={streaming}
           className="w-full bg-gray-800 rounded-lg px-2.5 py-2 text-xs resize-none focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[40px] max-h-[100px]"
           rows={2}
         />
-        <button
-          onClick={handleSend}
-          disabled={streaming || !input.trim()}
-          className="w-full mt-1.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-        >
-          {streaming ? "⏳..." : "Отправить"}
-        </button>
+        <div className="flex gap-1.5 mt-1.5">
+          <button
+            onClick={() => handleSend("chat")}
+            disabled={streaming || !input.trim()}
+            className="flex-1 bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+          >
+            {streaming ? "⏳..." : "Спросить"}
+          </button>
+          <button
+            onClick={() => handleSend("edit")}
+            disabled={streaming || !input.trim()}
+            title="Ваш текст — команда: применить правку к CV/отклику"
+            className="flex-1 bg-amber-700 hover:bg-amber-600 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+          >
+            ✏️ Применить
+          </button>
+        </div>
       </div>
     </div>
   );

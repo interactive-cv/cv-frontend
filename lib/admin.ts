@@ -206,6 +206,8 @@ export async function editChatStream(
     history?: { role: string; content: string }[];
     temperature?: number;
     cover_limit?: number;
+    /** chat — диалог (только ответ), edit — применить правку текстов. */
+    mode?: "chat" | "edit";
   }
 ): Promise<Response> {
   const res = await fetch(`${API}/api/admin/applications/edit-chat`, {
