@@ -62,14 +62,26 @@ export default function EditChat({
   }, [messages, streamText]);
 
   async function handleSend(mode: "chat" | "edit") {
-    const instruction = input.trim();
-    if (!instruction || streaming) return;
+    if (streaming) return;
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
 
+    // Пустое поле в режиме правки = применить последнюю инструкцию
+    // (ИИ предложил правку в диалоге — кнопка подтверждает её).
+    let instruction = input.trim();
+    const lastUser = [...messages].reverse().find((m) => m.role === "user");
+    if (!instruction) {
+      if (mode !== "edit" || !lastUser) return;
+      instruction = lastUser.content;
+    }
+
+    const isReapply = !input.trim();
     const userMsg: Message = { role: "user", content: instruction };
-    const newMessages = [...messages, userMsg];
-    setMessages(newMessages);
+    // При повторном применении не дублируем сообщение в чате —
+    // инструкция уже там; history уходит без текущей реплики (иначе
+    // LLM получал её дважды).
+    const baseMessages = isReapply ? messages : [...messages, userMsg];
+    setMessages(baseMessages);
     setInput("");
     setStreaming(true);
     setStreamText("");
@@ -81,7 +93,7 @@ export default function EditChat({
         instruction,
         kind,
         vacancy_text: vacancyText,
-        history: newMessages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
+        history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
         temperature: 0.6,
         cover_limit: coverLimit,
         mode,
@@ -203,8 +215,8 @@ ${acc.trim()}`;
           </button>
           <button
             onClick={() => handleSend("edit")}
-            disabled={streaming || !input.trim()}
-            title="Ваш текст — команда: применить правку к CV/отклику"
+            disabled={streaming || (!input.trim() && !messages.some((m) => m.role === "user"))}
+            title="Применить правку: текст из поля — команда; с пустым полем — последняя ваша инструкция из диалога"
             className="flex-1 bg-amber-700 hover:bg-amber-600 disabled:opacity-40 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
           >
             ✏️ Применить
