@@ -34,7 +34,7 @@ export default function AssistantChat({
   const [streaming, setStreaming] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [error, setError] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -45,9 +45,11 @@ export default function AssistantChat({
       .finally(() => setLoaded(true));
   }, [appId]);
 
+  // Вниз при открытии (мгновенно) и при каждом токене стрима.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length, streamText]);
+    const el = listRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages.length, streamText, loaded]);
 
   async function send() {
     const message = input.trim();
@@ -134,7 +136,10 @@ export default function AssistantChat({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto flex flex-col gap-2 mb-2 pr-1">
+      <div
+        ref={listRef}
+        className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2 mb-2 pr-1"
+      >
         {messages.length === 0 && !streaming && (
           <p className="text-gray-600 text-xs">
             Спрашивайте про заказ («что он имеет в виду под…»),
@@ -171,7 +176,6 @@ export default function AssistantChat({
             {streamText || <TypingIndicator />}
           </div>
         )}
-        <div ref={endRef} />
       </div>
 
       {error && <p className="text-red-400 text-xs mb-1">{error}</p>}
