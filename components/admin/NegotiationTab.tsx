@@ -52,6 +52,13 @@ export default function NegotiationTab({
 
   const bottomRef = useRef<HTMLDivElement>(null);
 
+  // Лента всегда показывается прокрученной вниз (последние сообщения):
+  // при открытии — мгновенно, при новых — тоже вниз.
+  useEffect(() => {
+    const el = bottomRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages.length, loaded]);
+
   function flashNotice(text: string) {
     setNotice(text);
     setTimeout(() => setNotice(""), 2500);
@@ -74,9 +81,7 @@ export default function NegotiationTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appId]);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages.length]);
+
 
   // Автосохранение черновика (debounce 1.5s) — не теряется при перезагрузке
   function onDraftChange(v: string) {
@@ -177,15 +182,18 @@ export default function NegotiationTab({
       {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
       {notice && <p className="text-green-500 text-sm mb-4">{notice}</p>}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[calc(100vh-230px)] min-h-[540px]">
         {/* ===== Левая колонка: чат с заказчиком ===== */}
-        <div className="flex flex-col">
+        <div className="flex flex-col min-h-0">
           <div className="text-xs text-gray-500 mb-2 font-medium">
             💬 Чат с заказчиком
           </div>
 
           {/* Лента */}
-          <div className="flex flex-col gap-3 mb-4 max-h-[40vh] overflow-y-auto pr-1">
+          <div
+            ref={bottomRef}
+            className="flex flex-col gap-3 mb-4 flex-1 min-h-0 overflow-y-auto pr-1"
+          >
             {messages.length === 0 && (
               <p className="text-gray-500 text-sm">
                 Переписки пока нет. Вставьте сообщение заказчика с площадки.
@@ -219,7 +227,6 @@ export default function NegotiationTab({
                 </div>
               </div>
             ))}
-            <div ref={bottomRef} />
           </div>
 
           {/* Вставка сообщения заказчика */}
