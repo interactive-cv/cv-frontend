@@ -123,7 +123,7 @@ export default function AssistantChat({
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-2">
         <span className="text-xs text-gray-500">
-          🤖 Ассистент — спросить, обсудить, попросить ответ заказчику
+          🤖 Ассистент — видит заказ, ТЗ, файлы из «Артефактов» и всю переписку
         </span>
         {messages.length > 0 && (
           <button
