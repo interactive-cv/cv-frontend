@@ -106,6 +106,9 @@ export interface ApplicationDetail extends Application {
   platform: ApplicationPlatform;
   interviews: Interview[];
   draft_reply?: string | null;
+  offered_price?: string | null;
+  offered_price_max?: string | null;
+  my_term_days?: number | null;
   artifacts: Artifact[];
   last_click_at: string | null;
 }
@@ -124,6 +127,9 @@ export interface ApplicationInput {
   chat_url?: string;
   budget?: string;
   budget_max?: string;
+  offered_price?: string;
+  offered_price_max?: string;
+  my_term_days?: number;
   applicant_count?: number;
   deadline?: string;
   expected_term?: string;
@@ -149,6 +155,9 @@ export interface ApplicationUpdate {
   chat_url?: string;
   budget?: string;
   budget_max?: string;
+  offered_price?: string;
+  offered_price_max?: string;
+  my_term_days?: number;
   applicant_count?: number;
   deadline?: string;
   expected_term?: string;
@@ -176,6 +185,9 @@ export async function generateCV(
     platform?: ApplicationPlatform;
     budget?: string;
     budget_max?: string;
+    offered_price?: string;
+    offered_price_max?: string;
+    my_term_days?: number;
     spec_text?: string;
     extra_instruction?: string;
     temperature?: number;

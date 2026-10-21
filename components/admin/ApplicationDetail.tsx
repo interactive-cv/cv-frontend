@@ -103,6 +103,9 @@ export default function ApplicationDetail({ id }: { id: string }) {
         source_url: data.source_url ?? undefined,
         chat_url: data.chat_url ?? undefined,
         budget: data.budget ?? undefined,
+        offered_price: data.offered_price ?? undefined,
+        offered_price_max: data.offered_price_max ?? undefined,
+        my_term_days: data.my_term_days ?? undefined,
         applicant_count: data.applicant_count ?? undefined,
         deadline: data.deadline ?? undefined,
         expected_term: data.expected_term ?? undefined,
@@ -274,7 +277,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
   const isContest = data.kind === "contest";
   // Лимит символов отклика на площадке: Kwork — 2000 (жёсткий), FL.ru — 5000.
   const coverLimit =
-    data.platform === "kwork" ? 2000 : data.platform === "profi" ? 1000 : 5000;
+    data.platform === "kwork" ? 2000 : data.platform === "profi" ? 500 : 5000;
   const isFreelanceLike = isFreelance || isContest;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com";
 
@@ -617,13 +620,41 @@ export default function ApplicationDetail({ id }: { id: string }) {
           {/* Поля фриланс-заказа / конкурса */}
           <div className="grid grid-cols-2 gap-3">
             <Field
-              label={isContest ? "Приз / бюджет конкурса" : "Бюджет"}
+              label={isContest ? "Приз / бюджет конкурса" : "Цена заказчика"}
               value={data.budget ?? ""}
               onChange={(v) => {
                 setData({ ...data, budget: v });
                 setDirty(true);
               }}
               placeholder="50 000 ₽"
+            />
+            <Field
+              label="Моя цена отклика"
+              value={data.offered_price ?? ""}
+              onChange={(v) => {
+                setData({ ...data, offered_price: v });
+                setDirty(true);
+              }}
+              placeholder={data.platform === "profi" ? "вилка: от ₽" : "точная, ₽"}
+            />
+            <Field
+              label="Моя вилка до (Profi)"
+              value={data.offered_price_max ?? ""}
+              onChange={(v) => {
+                setData({ ...data, offered_price_max: v });
+                setDirty(true);
+              }}
+              placeholder="₽"
+            />
+            <Field
+              label="Мой срок в отклике (дней)"
+              value={data.my_term_days?.toString() ?? ""}
+              onChange={(v) => {
+                setData({ ...data, my_term_days: v ? parseInt(v, 10) : null });
+                setDirty(true);
+              }}
+              placeholder="30"
+              type="number"
             />
             <Field
               label={isContest ? "Участников конкурса" : "Конкурс (откликнулись)"}
