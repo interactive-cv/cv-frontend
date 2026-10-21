@@ -31,7 +31,8 @@ export default function NewApplication() {
 
   // Тип отклика и платформа
   const [kind, setKind] = useState<ApplicationKind>("freelance");
-  const [platform, setPlatform] = useState<"fl" | "kwork">("fl");
+  const [platform, setPlatform] = useState<"fl" | "kwork" | "profi">("fl");
+  const [platformDetected, setPlatformDetected] = useState(false);
 
   // Форма
   const [company, setCompany] = useState("");
@@ -71,8 +72,12 @@ export default function NewApplication() {
   // Конкурс разделяет с фрилансом поля: ТЗ, бюджет, дедлайн, участников, estimate.
   const isFreelanceLike = isFreelance || isContest;
   const isKwork = platform === "kwork";
-  // Лимит символов отклика на площадке: Kwork — 2000 (жёсткий), FL.ru — 5000.
-  const coverLimit = isKwork ? 2000 : 5000;
+  const isProfi = platform === "profi";
+  // Биржи с режимом «только отклик» (CV не генерируется, ссылки запрещены)
+  const isMarketplace = isKwork || isProfi;
+  // Лимит символов отклика: Kwork — 2000 (жёсткий), Profi — 1000
+  // (рекомендация площадки ~60 слов), FL.ru — 5000.
+  const coverLimit = isKwork ? 2000 : isProfi ? 1000 : 5000;
 
   async function handleSpecUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
@@ -126,6 +131,20 @@ export default function NewApplication() {
       .catch(() => {});
   }, []);
 
+  function detectPlatform(url: string) {
+    // Автоопределение площадки по ссылке на заказ: fl.ru / kwork.ru / profi.ru
+    try {
+      const host = new URL(url.trim()).hostname.toLowerCase();
+      if (host.endsWith("fl.ru")) setPlatform("fl");
+      else if (host.endsWith("kwork.ru")) setPlatform("kwork");
+      else if (host.endsWith("profi.ru")) setPlatform("profi");
+      else return;
+      setPlatformDetected(true);
+    } catch {
+      setPlatformDetected(false);
+    }
+  }
+
   function toggleProject(title: string) {
     setSelectedProjects((prev) =>
       prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title]
@@ -148,7 +167,7 @@ export default function NewApplication() {
         vacancy_text: vacancyText,
         selected_projects: selectedProjects,
         kind,
-        platform: isKwork ? "kwork" : undefined,
+        platform: isMarketplace ? platform : undefined,
         budget: budget || undefined,
         budget_max: (isKwork && budgetMax) ? budgetMax : undefined,
         spec_text: specText || undefined,
@@ -216,7 +235,7 @@ export default function NewApplication() {
         slug,
         status,
         kind,
-        platform: isKwork ? "kwork" : undefined,
+        platform: isMarketplace ? platform : undefined,
         source_url: sourceUrl || undefined,
         chat_url: chatUrl || undefined,
         budget: budget || undefined,
@@ -241,7 +260,7 @@ export default function NewApplication() {
             const result2 = await createApplication(token, {
               company, role, vacancy_text: vacancyText, cover_letter: coverLetter,
               cv_markdown: cvMarkdown, slug: `${base}-${i}`, status,
-              kind, platform: isKwork ? "kwork" : undefined,
+              kind, platform: isMarketplace ? platform : undefined,
               source_url: sourceUrl || undefined, chat_url: chatUrl || undefined,
               budget: budget || undefined,
         budget_max: budgetMax || undefined, applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
@@ -342,9 +361,24 @@ export default function NewApplication() {
               >
                 🟢 Kwork
               </button>
+              <button
+                onClick={() => setPlatform("profi")}
+                className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
+                  platform === "profi"
+                    ? "bg-orange-600 text-white"
+                    : "bg-gray-800 text-gray-400 hover:text-white"
+                }`}
+              >
+                🟠 Profi
+              </button>
               {isKwork && (
                 <span className="text-[10px] text-gray-600">
                   Только отклик (150-2000 зн.), без ссылок и контактов
+                </span>
+              )}
+              {isProfi && (
+                <span className="text-[10px] text-gray-600">
+                  Только отклик (до ~60 слов), без ссылок и контактов; отклик платный
                 </span>
               )}
             </div>
@@ -371,12 +405,23 @@ export default function NewApplication() {
 
           {/* Ссылки (сразу после заказчика/роли) */}
           <div className="grid grid-cols-2 gap-3">
-            <input
-              value={sourceUrl}
-              onChange={(e) => setSourceUrl(e.target.value)}
-              placeholder={isFreelanceLike ? "Ссылка на заказ/конкурс (FL.ru)" : "Ссылка на вакансию"}
-              className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
+            <div>
+              <input
+                value={sourceUrl}
+                onChange={(e) => {
+                  setSourceUrl(e.target.value);
+                  detectPlatform(e.target.value);
+                }}
+                onBlur={() => sourceUrl.trim() && detectPlatform(sourceUrl)}
+                placeholder={isFreelanceLike ? "Ссылка на заказ (FL/Kwork/Profi — биржа определится сама)" : "Ссылка на вакансию"}
+                className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              {platformDetected && isFreelanceLike && (
+                <p className="text-[10px] text-green-500 mt-1">
+                  ✓ Биржа определена по ссылке: {platform === "fl" ? "FL.ru" : platform === "kwork" ? "Kwork" : "Profi.ru"}
+                </p>
+              )}
+            </div>
             <input
               value={chatUrl}
               onChange={(e) => setChatUrl(e.target.value)}
@@ -633,9 +678,9 @@ export default function NewApplication() {
           {isKwork ? (
             <div>
               <div className="flex justify-between items-center mb-1">
-                <span className="text-xs text-gray-500">✏ Отклик для Kwork (только текст, без ссылок)</span>
-                <span className={`text-xs ${coverLetter.length < 150 || coverLetter.length > coverLimit ? "text-red-400" : "text-gray-500"}`}>
-                  {coverLetter.length} / {coverLimit} {coverLetter.length < 150 && "(мин. 150)"}
+                <span className="text-xs text-gray-500">✏ Отклик для {isProfi ? "Profi.ru (коротко, без ссылок и контактов)" : "Kwork (только текст, без ссылок)"}</span>
+                <span className={`text-xs ${coverLetter.length > coverLimit ? "text-red-400" : "text-gray-500"}`}>
+                  {coverLetter.length} / {coverLimit}{isKwork && coverLetter.length < 150 ? " (мин. 150)" : ""}
                 </span>
               </div>
               <textarea
@@ -697,7 +742,7 @@ export default function NewApplication() {
           >
             ← Назад (изменить данные)
           </button>
-          {!isKwork && (
+          {!isMarketplace && (
             <button
               onClick={exportCvPdf}
               disabled={!cvMarkdown.trim() || pdfBusy}

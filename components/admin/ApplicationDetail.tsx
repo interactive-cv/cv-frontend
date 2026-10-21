@@ -273,7 +273,8 @@ export default function ApplicationDetail({ id }: { id: string }) {
   const isFreelance = data.kind === "freelance";
   const isContest = data.kind === "contest";
   // Лимит символов отклика на площадке: Kwork — 2000 (жёсткий), FL.ru — 5000.
-  const coverLimit = data.platform === "kwork" ? 2000 : 5000;
+  const coverLimit =
+    data.platform === "kwork" ? 2000 : data.platform === "profi" ? 1000 : 5000;
   const isFreelanceLike = isFreelance || isContest;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://cv.example.com";
 
@@ -307,6 +308,9 @@ export default function ApplicationDetail({ id }: { id: string }) {
             <span className="text-xs text-gray-400">{KIND_LABEL[data.kind] ?? data.kind}</span>
             {data.platform === "kwork" && (
               <span className="text-xs text-green-400">🟢 Kwork</span>
+            )}
+            {data.platform === "profi" && (
+              <span className="text-xs text-orange-400">🟠 Profi</span>
             )}
             {data.rating ? (
               <span className="text-xs text-amber-400">
