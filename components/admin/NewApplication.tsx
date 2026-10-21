@@ -169,7 +169,7 @@ export default function NewApplication() {
         kind,
         platform: isMarketplace ? platform : undefined,
         budget: budget || undefined,
-        budget_max: (isKwork && budgetMax) ? budgetMax : undefined,
+        budget_max: (isMarketplace && budgetMax) ? budgetMax : undefined,
         spec_text: specText || undefined,
         extra_instruction: extraInstruction || undefined,
         temperature,
@@ -378,7 +378,7 @@ export default function NewApplication() {
               )}
               {isProfi && (
                 <span className="text-[10px] text-gray-600">
-                  Только отклик (до ~60 слов), без ссылок и контактов; отклик платный
+                  Только отклик (до ~60 слов) с вилкой цены, без ссылок и контактов
                 </span>
               )}
             </div>
@@ -510,16 +510,17 @@ export default function NewApplication() {
                 onChange={(e) => setBudget(e.target.value)}
                 placeholder={
                   isKwork ? "Желаемый бюджет (₽)"
+                  : isProfi ? "Цена от (₽) — вилка отклика"
                   : isContest ? "Приз / бюджет конкурса"
                   : "Бюджет (50 000 ₽)"
                 }
                 className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
-              {isKwork ? (
+              {isMarketplace ? (
                 <input
                   value={budgetMax}
                   onChange={(e) => setBudgetMax(e.target.value)}
-                  placeholder="Допустимый бюджет (₽)"
+                  placeholder={isKwork ? "Допустимый бюджет (₽)" : "Цена до (₽)"}
                   className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               ) : (
