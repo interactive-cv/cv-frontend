@@ -46,7 +46,7 @@ export async function exportPdfPreview(
 }
 
 export type ApplicationKind = "vacancy" | "freelance" | "contest";
-export type ApplicationPlatform = "fl" | "kwork" | null;
+export type ApplicationPlatform = "fl" | "kwork" | "profi" | null;
 
 /** Общие поля отклика (для списка и деталей). */
 export interface Application {
