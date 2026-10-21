@@ -46,6 +46,9 @@ export default function NewApplication() {
   const [chatUrl, setChatUrl] = useState("");
   const [budget, setBudget] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
+  const [offeredPrice, setOfferedPrice] = useState("");
+  const [offeredPriceMax, setOfferedPriceMax] = useState("");
+  const [myTermDays, setMyTermDays] = useState("");
   const [applicantCount, setApplicantCount] = useState("");
   const [deadline, setDeadline] = useState("");
   const [expectedTerm, setExpectedTerm] = useState("");
@@ -77,7 +80,7 @@ export default function NewApplication() {
   const isMarketplace = isKwork || isProfi;
   // Лимит символов отклика: Kwork — 2000 (жёсткий), Profi — 1000
   // (рекомендация площадки ~60 слов), FL.ru — 5000.
-  const coverLimit = isKwork ? 2000 : isProfi ? 1000 : 5000;
+  const coverLimit = isKwork ? 2000 : isProfi ? 500 : 5000;
 
   async function handleSpecUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
@@ -169,7 +172,10 @@ export default function NewApplication() {
         kind,
         platform: isMarketplace ? platform : undefined,
         budget: budget || undefined,
-        budget_max: (isMarketplace && budgetMax) ? budgetMax : undefined,
+        budget_max: (isKwork && budgetMax) ? budgetMax : undefined,
+        offered_price: offeredPrice || undefined,
+        offered_price_max: (isProfi && offeredPriceMax) ? offeredPriceMax : undefined,
+        my_term_days: (!isProfi && myTermDays) ? parseInt(myTermDays, 10) : undefined,
         spec_text: specText || undefined,
         extra_instruction: extraInstruction || undefined,
         temperature,
@@ -240,6 +246,9 @@ export default function NewApplication() {
         chat_url: chatUrl || undefined,
         budget: budget || undefined,
         budget_max: budgetMax || undefined,
+        offered_price: offeredPrice || undefined,
+        offered_price_max: (isProfi && offeredPriceMax) ? offeredPriceMax : undefined,
+        my_term_days: (!isProfi && myTermDays) ? parseInt(myTermDays, 10) : undefined,
         applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
         deadline: deadline || undefined,
         expected_term: expectedTerm || undefined,
@@ -263,7 +272,10 @@ export default function NewApplication() {
               kind, platform: isMarketplace ? platform : undefined,
               source_url: sourceUrl || undefined, chat_url: chatUrl || undefined,
               budget: budget || undefined,
-        budget_max: budgetMax || undefined, applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
+        budget_max: budgetMax || undefined,        offered_price: offeredPrice || undefined,
+        offered_price_max: (isProfi && offeredPriceMax) ? offeredPriceMax : undefined,
+        my_term_days: (!isProfi && myTermDays) ? parseInt(myTermDays, 10) : undefined,
+ applicant_count: applicantCount ? parseInt(applicantCount, 10) : undefined,
               deadline: deadline || undefined, expected_term: expectedTerm || undefined,
               rating: rating || undefined, spec_text: specText || undefined,
               estimate: estimate || undefined,
@@ -509,18 +521,31 @@ export default function NewApplication() {
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
                 placeholder={
-                  isKwork ? "Желаемый бюджет (₽)"
-                  : isProfi ? "Цена от (₽) — вилка отклика"
+                  isKwork ? "Желаемый бюджет заказчика (₽)"
+                  : isProfi ? "Цена заказчика: до (₽)"
                   : isContest ? "Приз / бюджет конкурса"
-                  : "Бюджет (50 000 ₽)"
+                  : "Бюджет заказчика (₽)"
                 }
                 className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
-              {isMarketplace ? (
+              <input
+                value={offeredPrice}
+                onChange={(e) => setOfferedPrice(e.target.value)}
+                placeholder={isProfi ? "Моя вилка: от (₽)" : "Моя цена отклика (₽, точная)"}
+                className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+              />
+              {isKwork ? (
                 <input
                   value={budgetMax}
                   onChange={(e) => setBudgetMax(e.target.value)}
-                  placeholder={isKwork ? "Допустимый бюджет (₽)" : "Цена до (₽)"}
+                  placeholder="Допустимый бюджет заказчика (₽)"
+                  className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              ) : isProfi ? (
+                <input
+                  value={offeredPriceMax}
+                  onChange={(e) => setOfferedPriceMax(e.target.value)}
+                  placeholder="Моя вилка: до (₽)"
                   className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               ) : (
@@ -544,10 +569,20 @@ export default function NewApplication() {
                 onChange={(e) => setExpectedTerm(e.target.value)}
                 placeholder={
                   isContest ? "Что получает победитель (постоянная работа)"
-                  : "Ожидаемый срок (2 недели)"
+                  : "Прочее о сроке (необязательно)"
                 }
                 className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
+              {!isProfi && (
+                <input
+                  value={myTermDays}
+                  onChange={(e) => setMyTermDays(e.target.value.replace(/\D/g, ""))}
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Мой срок в отклике (дней)"
+                  className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+                />
+              )}
             </div>
           )}
 
