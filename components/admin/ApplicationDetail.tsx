@@ -817,7 +817,7 @@ function Field({
       <label className="text-xs text-gray-500 block mb-1">{label}</label>
       <input
         type={type}
-        value={money ? groupDigits(value) : value}
+        value={money && /^\d*$/.test(value) ? groupDigits(value) : value}
         onChange={(e) => onChange(money ? digitsOf(e.target.value) : e.target.value)}
         inputMode={money ? "numeric" : undefined}
         placeholder={placeholder}
