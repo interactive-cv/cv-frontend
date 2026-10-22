@@ -45,6 +45,7 @@ export default function NewApplication() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [chatUrl, setChatUrl] = useState("");
   const [budget, setBudget] = useState("");
+  const [priceNegotiable, setPriceNegotiable] = useState(false);
   const [budgetMax, setBudgetMax] = useState("");
   const [offeredPrice, setOfferedPrice] = useState("");
   const [offeredPriceMax, setOfferedPriceMax] = useState("");
@@ -78,6 +79,11 @@ export default function NewApplication() {
   const isProfi = platform === "profi";
   // Биржи с режимом «только отклик» (CV не генерируется, ссылки запрещены)
   const isMarketplace = isKwork || isProfi;
+  // Цена заказчика условно обязательна: либо вставлена, либо явно
+  // «по договорённости» (галочка) — чтобы не забывать перенести из заказа.
+  const needsCustomerPrice = isFreelanceLike && !isContest;
+  const budgetValue = priceNegotiable && needsCustomerPrice ? "по договорённости" : budget;
+
   // Лимит символов отклика: Kwork — 2000 (жёсткий), Profi — 1000
   // (рекомендация площадки ~60 слов), FL.ru — 5000.
   const coverLimit = isKwork ? 2000 : isProfi ? 500 : 5000;
@@ -159,6 +165,10 @@ export default function NewApplication() {
       setError("Заполните роль/заказ и текст вакансии/заказа");
       return;
     }
+    if (needsCustomerPrice && !priceNegotiable && !budget.trim()) {
+      setError("Укажите цену заказчика из заказа или отметьте «по договорённости»");
+      return;
+    }
     setError("");
     setPhase("generating");
     const token = localStorage.getItem(TOKEN_KEY);
@@ -171,7 +181,7 @@ export default function NewApplication() {
         selected_projects: selectedProjects,
         kind,
         platform: isMarketplace ? platform : undefined,
-        budget: budget || undefined,
+        budget: budgetValue || undefined,
         budget_max: (isKwork && budgetMax) ? budgetMax : undefined,
         offered_price: offeredPrice || undefined,
         offered_price_max: (isProfi && offeredPriceMax) ? offeredPriceMax : undefined,
@@ -244,7 +254,7 @@ export default function NewApplication() {
         platform: isMarketplace ? platform : undefined,
         source_url: sourceUrl || undefined,
         chat_url: chatUrl || undefined,
-        budget: budget || undefined,
+        budget: budgetValue || undefined,
         budget_max: budgetMax || undefined,
         offered_price: offeredPrice || undefined,
         offered_price_max: (isProfi && offeredPriceMax) ? offeredPriceMax : undefined,
@@ -271,7 +281,7 @@ export default function NewApplication() {
               cv_markdown: cvMarkdown, slug: `${base}-${i}`, status,
               kind, platform: isMarketplace ? platform : undefined,
               source_url: sourceUrl || undefined, chat_url: chatUrl || undefined,
-              budget: budget || undefined,
+              budget: budgetValue || undefined,
         budget_max: budgetMax || undefined,        offered_price: offeredPrice || undefined,
         offered_price_max: (isProfi && offeredPriceMax) ? offeredPriceMax : undefined,
         my_term_days: (!isProfi && myTermDays) ? parseInt(myTermDays, 10) : undefined,
@@ -517,17 +527,41 @@ export default function NewApplication() {
           {/* Поля фриланс-заказа / конкурса */}
           {isFreelanceLike && (
             <div className="grid grid-cols-2 gap-3">
-              <input
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                placeholder={
-                  isKwork ? "Желаемый бюджет заказчика (₽)"
-                  : isProfi ? "Цена заказчика: до (₽)"
-                  : isContest ? "Приз / бюджет конкурса"
-                  : "Бюджет заказчика (₽)"
-                }
-                className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
+              <div>
+                <input
+                  value={budget}
+                  onChange={(e) => {
+                    setBudget(e.target.value);
+                    if (e.target.value.trim()) setPriceNegotiable(false);
+                  }}
+                  disabled={priceNegotiable}
+                  placeholder={
+                    isKwork ? "Желаемый бюджет заказчика (₽)"
+                    : isProfi ? "Цена заказчика: до (₽)"
+                    : isContest ? "Приз / бюджет конкурса"
+                    : "Бюджет заказчика (₽)"
+                  }
+                  className={`w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 ${
+                    needsCustomerPrice && !priceNegotiable && !budget.trim()
+                      ? "ring-1 ring-red-500"
+                      : "focus:ring-blue-500"
+                  } disabled:opacity-50`}
+                />
+                {needsCustomerPrice && (
+                  <label className="flex items-center gap-1.5 mt-1 text-[11px] text-gray-400 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={priceNegotiable}
+                      onChange={(e) => {
+                        setPriceNegotiable(e.target.checked);
+                        if (e.target.checked) setBudget("");
+                      }}
+                      className="accent-blue-500"
+                    />
+                    Цена по договорённости (в заказе не указана)
+                  </label>
+                )}
+              </div>
               <input
                 value={offeredPrice}
                 onChange={(e) => setOfferedPrice(e.target.value)}
