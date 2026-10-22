@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  digitsOf,
+  groupDigits,
   archiveApplication,
   createInterview,
   deleteApplication,
@@ -620,6 +622,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
           {/* Поля фриланс-заказа / конкурса */}
           <div className="grid grid-cols-2 gap-3">
             <Field
+              money
               label={isContest ? "Приз / бюджет конкурса" : "Цена заказчика"}
               value={data.budget ?? ""}
               onChange={(v) => {
@@ -629,6 +632,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
               placeholder="50 000 ₽"
             />
             <Field
+              money
               label="Моя цена отклика"
               value={data.offered_price ?? ""}
               onChange={(v) => {
@@ -638,6 +642,7 @@ export default function ApplicationDetail({ id }: { id: string }) {
               placeholder={data.platform === "profi" ? "вилка: от ₽" : "точная, ₽"}
             />
             <Field
+              money
               label="Моя вилка до (Profi)"
               value={data.offered_price_max ?? ""}
               onChange={(v) => {
@@ -797,20 +802,24 @@ function Field({
   onChange,
   placeholder,
   type = "text",
+  money = false,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   placeholder?: string;
   type?: string;
+  /** Целое число с разрядами: показ «1 000 000», в данные — «1000000». */
+  money?: boolean;
 }) {
   return (
     <div>
       <label className="text-xs text-gray-500 block mb-1">{label}</label>
       <input
         type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
+        value={money && /^\d*$/.test(value) ? groupDigits(value) : value}
+        onChange={(e) => onChange(money ? digitsOf(e.target.value) : e.target.value)}
+        inputMode={money ? "numeric" : undefined}
         placeholder={placeholder}
         className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
       />

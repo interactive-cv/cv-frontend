@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  digitsOf,
+  groupDigits,
   generateCV,
   createApplication,
   uploadSpecFiles,
@@ -529,11 +531,12 @@ export default function NewApplication() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <input
-                  value={budget}
+                  value={groupDigits(budget)}
                   onChange={(e) => {
-                    setBudget(e.target.value);
+                    setBudget(digitsOf(e.target.value));
                     if (e.target.value.trim()) setPriceNegotiable(false);
                   }}
+                  inputMode="numeric"
                   disabled={priceNegotiable}
                   placeholder={
                     isKwork ? "Желаемый бюджет заказчика (₽)"
@@ -563,22 +566,25 @@ export default function NewApplication() {
                 )}
               </div>
               <input
-                value={offeredPrice}
-                onChange={(e) => setOfferedPrice(e.target.value)}
+                value={groupDigits(offeredPrice)}
+                onChange={(e) => setOfferedPrice(digitsOf(e.target.value))}
+                inputMode="numeric"
                 placeholder={isProfi ? "Моя вилка: от (₽)" : "Моя цена отклика (₽, точная)"}
                 className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
               {isKwork ? (
                 <input
-                  value={budgetMax}
-                  onChange={(e) => setBudgetMax(e.target.value)}
+                  value={groupDigits(budgetMax)}
+                  onChange={(e) => setBudgetMax(digitsOf(e.target.value))}
+                  inputMode="numeric"
                   placeholder="Допустимый бюджет заказчика (₽)"
                   className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               ) : isProfi ? (
                 <input
-                  value={offeredPriceMax}
-                  onChange={(e) => setOfferedPriceMax(e.target.value)}
+                  value={groupDigits(offeredPriceMax)}
+                  onChange={(e) => setOfferedPriceMax(digitsOf(e.target.value))}
+                  inputMode="numeric"
                   placeholder="Моя вилка: до (₽)"
                   className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />

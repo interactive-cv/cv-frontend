@@ -18,6 +18,17 @@ async function httpError(res: Response): Promise<Error> {
   return new Error(msg);
 }
 
+/** Ценовые поля: ввод только целых чисел, показ с разрядами.
+ *  В БД/API уходят чистые цифры (digitsOf), формат — только для глаз. */
+export function digitsOf(v: string): string {
+  return (v || "").replace(/\D/g, "");
+}
+
+export function groupDigits(v: string): string {
+  const d = digitsOf(v);
+  return d ? Number(d).toLocaleString("ru-RU") : "";
+}
+
 /** Скачивает blob как файл (PDF-экспорт). */
 export function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
