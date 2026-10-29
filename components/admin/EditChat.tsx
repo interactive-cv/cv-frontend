@@ -7,15 +7,18 @@ import { TOKEN_KEY } from "./AdminLogin";
 type Message = { role: "user" | "assistant"; content: string };
 
 /**
- * Парсит накопленный стрим — извлекает CV и cover letter из формата:
- * ===CV===...===COVER===...===END===
+ * Парсит накопленный стрим — извлекает CV, cover letter и оценку из формата:
+ * ===CV===...===COVER===...===ESTIMATE===...===END===
  * Возвращает то, что уже успело прийти (partial).
  */
-function parsePartialResponse(text: string): { cv: string | null; cover: string | null } {
+function parsePartialResponse(
+  text: string
+): { cv: string | null; cover: string | null; estimate: string | null } {
   // Смешанный режим: ассистент может прислать только CV, только COVER,
-  // оба — или чистый текст (ответ на вопрос, тексты не трогаем).
+  // оценку, любую комбинацию — или чистый текст (ответ на вопрос, тексты не трогаем).
   let cv: string | null = null;
   let cover: string | null = null;
+  let estimate: string | null = null;
 
   if (text.includes("===CV===")) {
     const afterCv = text.split("===CV===")[1];
@@ -31,7 +34,11 @@ function parsePartialResponse(text: string): { cv: string | null; cover: string 
     cover = afterCover.split("===END===")[0].trim();
   }
 
-  return { cv, cover };
+  if (text.includes("===ESTIMATE===")) {
+    estimate = text.split("===ESTIMATE===")[1].split("===END===")[0].trim();
+  }
+
+  return { cv, cover, estimate };
 }
 
 export default function EditChat({
@@ -40,22 +47,35 @@ export default function EditChat({
   kind,
   vacancyText,
   coverLimit,
+  estimate,
   onCvChange,
   onCoverChange,
+  onEstimateChange,
+  messagesRef,
 }: {
   cvMarkdown: string;
   coverLetter: string;
   kind: ApplicationKind;
   vacancyText: string;
   coverLimit?: number;
+  estimate?: string | null;
   onCvChange: (v: string) => void;
   onCoverChange: (v: string) => void;
+  onEstimateChange?: (v: string) => void;
+  /** Проброс текущей истории наружу (сохранение prep-диалога в отклике). */
+  messagesRef?: React.MutableRefObject<Message[]>;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [streamText, setStreamText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // История доступна родителю в любой момент — NewApplication передаст её
+  // в prep_history при сохранении/публикации.
+  useEffect(() => {
+    if (messagesRef) messagesRef.current = messages;
+  }, [messages, messagesRef]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,6 +116,7 @@ export default function EditChat({
         history: messages.slice(-10).map((m) => ({ role: m.role, content: m.content })),
         temperature: 0.6,
         cover_limit: coverLimit,
+        current_estimate: estimate,
         mode,
       });
 
@@ -111,19 +132,22 @@ export default function EditChat({
 
         // В режиме правки парсим накопленный текст — редакторы live
         if (mode === "edit") {
-          const { cv, cover } = parsePartialResponse(acc);
+          const { cv, cover, estimate: est } = parsePartialResponse(acc);
           if (cv !== null) onCvChange(cv);
           if (cover !== null) onCoverChange(cover);
+          if (est !== null && onEstimateChange) onEstimateChange(est);
         }
       }
 
       let reply: string;
       if (mode === "edit") {
-        const { cv: finalCv, cover: finalCover } = parsePartialResponse(acc);
+        const { cv: finalCv, cover: finalCover, estimate: finalEst } =
+          parsePartialResponse(acc);
         const parts: string[] = [];
         if (finalCv !== null) parts.push(`CV (${finalCv.length} симв.)`);
         if (finalCover !== null) parts.push(`отклик (${finalCover.length} симв.)`);
-        const note = acc.split("===CV===")[0].split("===COVER===")[0].trim();
+        if (finalEst !== null) parts.push("оценка обновлена");
+        const note = acc.split("===CV===")[0].split("===COVER===")[0].split("===ESTIMATE===")[0].trim();
         reply = parts.length > 0
           ? `✅ Применено: ${parts.join(", ")}${note ? `
 ${note}` : ""}`

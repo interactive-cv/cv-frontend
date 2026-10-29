@@ -6,6 +6,7 @@ import {
   clearAssistantThread,
   listAssistantMessages,
   saveAssistantMessage,
+  updateApplication,
   type AssistantMessage,
 } from "@/lib/admin";
 import { TOKEN_KEY } from "./AdminLogin";
@@ -18,6 +19,20 @@ export function extractDraft(text: string): { draft: string | null; clean: strin
   let draft = after.split("===END===")[0].trim();
   if (draft.startsWith("```")) draft = draft.replace(/^```[a-z]*\n?/, "").replace(/```$/, "");
   return { draft: draft || null, clean: before.trim() };
+}
+
+/** Вычленяет обновлённую оценку стоимости/сроков (маркер ===ESTIMATE===),
+ *  вырезая блок из отображаемого текста ответа. */
+export function extractEstimate(
+  text: string
+): { estimate: string | null; clean: string } {
+  if (!text.includes("===ESTIMATE===")) return { estimate: null, clean: text };
+  const [before, after] = text.split("===ESTIMATE===");
+  const est = after.split("===END===")[0].trim();
+  const rest = after.includes("===END===")
+    ? after.split("===END===").slice(1).join("===END===")
+    : "";
+  return { estimate: est || null, clean: [before, rest].join("\n").trim() };
 }
 
 export default function AssistantChat({
@@ -34,7 +49,25 @@ export default function AssistantChat({
   const [streaming, setStreaming] = useState(false);
   const [streamText, setStreamText] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
+
+  function flashNotice(text: string) {
+    setNotice(text);
+    setTimeout(() => setNotice(""), 2500);
+  }
+
+  /** Ассистент вернул ===ESTIMATE=== — сохраняем в отклик (поле «Оценка»). */
+  async function applyEstimate(est: string) {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    try {
+      await updateApplication(token, appId, { estimate: est });
+      flashNotice("✓ Оценка обновлена");
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
@@ -63,6 +96,7 @@ export default function AssistantChat({
         id: `tmp-${Date.now()}`,
         role: "user",
         content: message,
+        origin: null,
         created_at: new Date().toISOString(),
       },
     ]);
@@ -89,11 +123,15 @@ export default function AssistantChat({
           id: `a-${Date.now()}`,
           role: "assistant",
           content: acc,
+          origin: null,
           created_at: new Date().toISOString(),
         },
       ]);
       const { draft } = extractDraft(acc);
       if (draft) onDraft(draft);
+      // Обновлённая оценка (===ESTIMATE===) — сохраняется в отклик
+      const { estimate } = extractEstimate(acc);
+      if (estimate) applyEstimate(estimate);
       // Ответ ассистента — в историю (БД)
       saveAssistantMessage(token, appId, acc).catch(() => {});
     } catch (e) {
@@ -123,7 +161,7 @@ export default function AssistantChat({
     <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-2">
         <span className="text-xs text-gray-500">
-          🤖 Ассистент — видит заказ, ТЗ, файлы из «Артефактов» и всю переписку
+          🤖 Ассистент — видит заказ, ТЗ, файлы, подготовку отклика и всю переписку
         </span>
         {messages.length > 0 && (
           <button
@@ -148,8 +186,13 @@ export default function AssistantChat({
           </p>
         )}
         {messages.map((m) => {
-          const { draft, clean } =
-            m.role === "assistant" ? extractDraft(m.content) : { draft: null, clean: m.content };
+          const isAssistant = m.role === "assistant";
+          const { estimate, clean: afterEst } = isAssistant
+            ? extractEstimate(m.content)
+            : { estimate: null, clean: m.content };
+          const { draft, clean } = isAssistant
+            ? extractDraft(afterEst)
+            : { draft: null, clean: afterEst };
           return (
             <div
               key={m.id}
@@ -157,8 +200,13 @@ export default function AssistantChat({
                 m.role === "user"
                   ? "self-end bg-blue-900/40 text-blue-50"
                   : "self-start bg-gray-800 text-gray-100"
-              }`}
+              } ${m.origin === "prep" ? "border border-amber-800/40" : ""}`}
             >
+              {m.origin === "prep" && (
+                <div className="text-[9px] text-amber-500/80 mb-1">
+                  подготовка отклика · до публикации
+                </div>
+              )}
               {clean || <span className="text-gray-500">(только текст для заказчика)</span>}
               {draft && (
                 <button
@@ -166,6 +214,16 @@ export default function AssistantChat({
                   className="mt-1 block text-[10px] text-blue-400 hover:text-blue-300 underline"
                 >
                   ↩ снова подставить в «для заказчика»
+                </button>
+              )}
+              {estimate && (
+                <button
+                  onClick={() => applyEstimate(estimate)}
+                  className={`mt-1 block text-[10px] text-amber-400 hover:text-amber-300 underline ${
+                    draft ? "" : "mt-1"
+                  }`}
+                >
+                  ↩ снова сохранить оценку
                 </button>
               )}
             </div>
@@ -179,6 +237,7 @@ export default function AssistantChat({
       </div>
 
       {error && <p className="text-red-400 text-xs mb-1">{error}</p>}
+      {notice && <p className="text-green-500 text-xs mb-1">{notice}</p>}
 
       <div className="flex gap-2">
         <textarea

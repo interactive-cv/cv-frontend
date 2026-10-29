@@ -152,6 +152,9 @@ export interface ApplicationInput {
   platform?: ApplicationPlatform;
   /** Staged-загрузки (POST /uploads) — привязать к создаваемой заявке. */
   uploads?: string[];
+  /** Предпубликационный диалог (EditChat) — сохраняется как ранние реплики
+   *  треда ассистента (origin="prep"), доступны во вкладке «Диалог». */
+  prep_history?: { role: string; content: string }[];
 }
 
 /** Поля отклика, которые можно обновить через PATCH. */
@@ -229,6 +232,9 @@ export async function editChatStream(
     history?: { role: string; content: string }[];
     temperature?: number;
     cover_limit?: number;
+    /** Текущая оценка стоимости/сроков — LLM видит её и может вернуть
+     *  обновлённую в ===ESTIMATE===...===END===. */
+    current_estimate?: string | null;
     /** chat — диалог (только ответ), edit — применить правку текстов. */
     mode?: "chat" | "edit";
   }
@@ -627,6 +633,8 @@ export interface AssistantMessage {
   id: string;
   role: AssistantRole;
   content: string;
+  /** null — тред вкладки «Диалог»; "prep" — обсуждение до публикации отклика. */
+  origin: string | null;
   created_at: string;
 }
 
