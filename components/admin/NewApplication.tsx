@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   digitsOf,
@@ -68,6 +68,10 @@ export default function NewApplication() {
   const [coverLetter, setCoverLetter] = useState("");
   const [estimate, setEstimate] = useState<string | null>(null);
   const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
+
+  // Предпубликационный диалог с ИИ (EditChat) — переживёт публикацию:
+  // уйдёт в отклик как prep_history и будет контекстом во вкладке «Диалог».
+  const editHistoryRef = useRef<{ role: "user" | "assistant"; content: string }[]>([]);
 
   // Дополнительная инструкция для LLM (на эту вакансию)
   const [extraInstruction, setExtraInstruction] = useState("");
@@ -270,6 +274,10 @@ export default function NewApplication() {
         generated_prompt: generatedPrompt || undefined,
         extra_instruction: extraInstruction || undefined,
         uploads: stagedFiles.filter((f) => f.id).map((f) => f.id),
+        prep_history: editHistoryRef.current.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
       });
       router.push(`/admin/${result.id}`);
     } catch (e) {
@@ -294,6 +302,10 @@ export default function NewApplication() {
               generated_prompt: generatedPrompt || undefined,
         extra_instruction: extraInstruction || undefined,
         uploads: stagedFiles.filter((f) => f.id).map((f) => f.id),
+        prep_history: editHistoryRef.current.map((m) => ({
+          role: m.role,
+          content: m.content,
+        })),
             });
             router.push(`/admin/${result2.id}`);
             return;
@@ -845,8 +857,11 @@ export default function NewApplication() {
           kind={kind}
           vacancyText={vacancyText}
           coverLimit={coverLimit}
+          estimate={estimate}
           onCvChange={setCvMarkdown}
           onCoverChange={setCoverLetter}
+          onEstimateChange={setEstimate}
+          messagesRef={editHistoryRef}
         />
       </div>
     </div>
