@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   digitsOf,
   groupDigits,
-  generateCV,
+  generateCVStream,
   createApplication,
   uploadSpecFiles,
   uploadFiles,
@@ -30,6 +30,8 @@ export default function NewApplication() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [pdfBusy, setPdfBusy] = useState(false);
+  // Живой статус генерации (стрим NDJSON): думает → пишет CV → пишет отклик → оценка
+  const [genStatus, setGenStatus] = useState("");
 
   // Тип отклика и платформа
   const [kind, setKind] = useState<ApplicationKind>("freelance");
@@ -177,10 +179,11 @@ export default function NewApplication() {
     }
     setError("");
     setPhase("generating");
+    setGenStatus("ИИ думает над откликом…");
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
     try {
-      const result = await generateCV(token, {
+      const res = await generateCVStream(token, {
         company,
         role,
         vacancy_text: vacancyText,
@@ -197,6 +200,43 @@ export default function NewApplication() {
         temperature,
         cover_limit: coverLimit,
       });
+      // Стрим NDJSON: progress → статус; done → результат; error → бросаем
+      const reader = res.body!.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      let result: {
+        cv_markdown: string;
+        cover_letter: string;
+        estimate: string | null;
+        prompt: string;
+      } | null = null;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        const lines = buf.split("\n");
+        buf = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          const ev = JSON.parse(line);
+          if (ev.type === "progress") {
+            setGenStatus(
+              ev.stage === "cv"
+                ? `Пишет CV — ${Number(ev.n).toLocaleString("ru-RU")} симв.`
+                : ev.stage === "cover"
+                  ? `Пишет отклик — ${Number(ev.n).toLocaleString("ru-RU")} симв.`
+                  : ev.stage === "estimate"
+                    ? "Считает оценку стоимости и сроков…"
+                    : "ИИ думает над откликом…"
+            );
+          } else if (ev.type === "done") {
+            result = ev;
+          } else if (ev.type === "error") {
+            throw new Error(ev.message);
+          }
+        }
+      }
+      if (!result) throw new Error("поток оборвался без результата");
       setCvMarkdown(result.cv_markdown);
       setCoverLetter(result.cover_letter);
       setEstimate(result.estimate);
@@ -748,6 +788,9 @@ export default function NewApplication() {
             : isFreelance ? "AI генерирует отклик на фриланс-заказ..."
             : "AI генерирует CV и отклик..."}
         </p>
+        {genStatus && (
+          <p className="text-blue-400 text-xs animate-pulse">{genStatus}</p>
+        )}
       </div>
     );
   }

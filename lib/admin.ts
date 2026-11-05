@@ -187,8 +187,13 @@ export async function listApplications(token: string): Promise<Application[]> {
   return res.json();
 }
 
-/** AI-генерация CV + cover letter из вакансии или фриланс-заказа. */
-export async function generateCV(
+/**
+ * AI-генерация CV + cover letter (стриминг NDJSON).
+ * События построчно: {"type":"progress","n":N,"stage":"cv|cover|estimate|thinking"}
+ * и финал {"type":"done","cv_markdown":...,"cover_letter":...,"estimate":...,"prompt":...}.
+ * Возвращает Response — поток читает вызывающий.
+ */
+export async function generateCVStream(
   token: string,
   data: {
     company: string;
@@ -207,14 +212,14 @@ export async function generateCV(
     temperature?: number;
     cover_limit?: number;
   }
-): Promise<{ cv_markdown: string; cover_letter: string; estimate: string | null; prompt: string }> {
+): Promise<Response> {
   const res = await fetch(`${API}/api/admin/applications/generate`, {
     method: "POST",
     headers: authHeaders(token),
     body: JSON.stringify(data),
   });
   if (!res.ok) throw await httpError(res);
-  return res.json();
+  return res;
 }
 
 /**
