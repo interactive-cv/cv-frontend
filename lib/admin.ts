@@ -552,6 +552,40 @@ export async function applyMasterCv(
   return res.json();
 }
 
+// ===== LLM settings: модель и уровень рассуждений (все вызовы z.ai) =====
+
+export interface LlmSettings {
+  /** Модель, реально используемая вызовами (из БД или дефолт). */
+  model: string;
+  /** Уровень рассуждений: low | high | max. */
+  reasoning_effort: string;
+  available_models: string[];
+  available_reasoning_efforts: string[];
+}
+
+/** Получить текущие настройки LLM. */
+export async function getLlmSettings(token: string): Promise<LlmSettings> {
+  const res = await fetch(`${API}/api/admin/llm-settings`, {
+    headers: authHeaders(token),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res.json();
+}
+
+/** Сохранить настройки LLM. Применяется ко всем LLM-вызовам без перезапуска. */
+export async function updateLlmSettings(
+  token: string,
+  data: Partial<Pick<LlmSettings, "model" | "reasoning_effort">>
+): Promise<LlmSettings> {
+  const res = await fetch(`${API}/api/admin/llm-settings`, {
+    method: "PATCH",
+    headers: authHeaders(token),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw await httpError(res);
+  return res.json();
+}
+
 // ===== Negotiation: переговоры с заказчиком =====
 
 export type NegotiationRole = "customer" | "me";

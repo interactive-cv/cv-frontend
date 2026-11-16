@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import AdminLogin, { TOKEN_KEY } from "./AdminLogin";
 import ThemeToggle from "@/components/ThemeToggle";
+import LlmControls from "./LlmControls";
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
@@ -41,10 +42,12 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
     <div className="admin-press h-screen flex bg-background text-foreground overflow-hidden">
       {/* Sidebar — фиксированный, не прокручивается */}
       <aside className="w-56 border-r border-gray-800 p-4 flex flex-col gap-1 shrink-0 h-full overflow-y-auto">
-        <div className="flex items-center justify-between mb-6 px-2">
+        <div className="flex items-center justify-between mb-3 px-2">
           <span className="text-lg font-bold">⚡ Admin</span>
           <ThemeToggle />
         </div>
+        {/* Модель LLM + уровень рассуждений — действуют на все вызовы z.ai из админки */}
+        <LlmControls className="mb-5" />
         {navItems.map((item) => {
           const active = pathname === item.href;
           return (
