@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import ChatMessage from "./ChatMessage";
 import ChatFab from "./ChatFab";
 import TypingIndicator from "./TypingIndicator";
@@ -26,6 +27,11 @@ function getShortLinkCode(): string | null {
 }
 
 export default function ChatWidget() {
+  // Виджет — для посетителей публичных страниц (CV, лендинги).
+  // В админке (/admin/*) кнопка не нужна: там свои инструменты и свой LLM-лог.
+  const pathname = usePathname();
+  const isAdmin = pathname?.startsWith("/admin") ?? false;
+
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -106,6 +112,9 @@ export default function ChatWidget() {
       setStreaming("");
     }
   }
+
+  // Админка: не рендерим ни кнопку, ни панель чата.
+  if (isAdmin) return null;
 
   return (
     <>
