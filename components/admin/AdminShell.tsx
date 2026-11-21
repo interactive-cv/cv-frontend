@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import AdminLogin, { TOKEN_KEY } from "./AdminLogin";
 import ThemeToggle from "@/components/ThemeToggle";
 import LlmControls from "./LlmControls";
+import LLMLogWidget from "./LLMLogWidget";
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
@@ -79,6 +80,9 @@ export default function AdminShell({ children }: { children: React.ReactNode }) 
 
       {/* Контент — прокручивается отдельно */}
       <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+
+      {/* Живой журнал обращений к LLM (модель + уровень думания) */}
+      <LLMLogWidget />
     </div>
   );
 }

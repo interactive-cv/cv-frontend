@@ -664,6 +664,30 @@ export async function suggestReplyStream(
   return res;
 }
 
+// ===== Живой журнал LLM-вызовов (виджет админки) =====
+
+export interface LLMCall {
+  id: string;
+  /** Эндпоинт-источник: generate / edit-chat / assistant-chat / cv-edit / hr-chat… */
+  source: string;
+  /** Фактически отправленная модель (glm-5.3 / glm-5.3-flash…) */
+  model: string;
+  /** Фактически отправленный reasoning_effort (low/high/max) */
+  effort: string;
+  temperature: number;
+  started_at: number;
+  status: "running" | "ok" | "error";
+  duration_s: number | null;
+  error?: string;
+}
+
+/** Последние ~50 обращений к z.ai (модель, уровень думания, статус). */
+export async function listLLMCalls(token: string): Promise<LLMCall[]> {
+  const res = await fetch(`${API}/api/admin/llm-calls`, { headers: authHeaders(token) });
+  if (!res.ok) throw await httpError(res);
+  return res.json();
+}
+
 // ===== Assistant: тред владельца с LLM по отклику =====
 
 export type AssistantRole = "user" | "assistant";
