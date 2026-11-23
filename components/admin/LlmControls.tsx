@@ -7,7 +7,7 @@ import { TOKEN_KEY } from "./AdminLogin";
 /** Короткие подписи моделей для UI (glm-5.3-flash → «Flash»). */
 function modelLabel(m: string): string {
   if (m === "glm-5.3-flash") return "Flash";
-  if (m === "glm-5.3") return "5.3";
+  if (m === "glm-5.4") return "5.4";
   return m;
 }
 

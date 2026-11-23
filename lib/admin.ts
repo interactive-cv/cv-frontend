@@ -670,7 +670,7 @@ export interface LLMCall {
   id: string;
   /** Эндпоинт-источник: generate / edit-chat / assistant-chat / cv-edit / hr-chat… */
   source: string;
-  /** Фактически отправленная модель (glm-5.3 / glm-5.3-flash…) */
+  /** Фактически отправленная модель (glm-5.4 / glm-5.3-flash…) */
   model: string;
   /** Фактически отправленный reasoning_effort (low/high/max) */
   effort: string;
