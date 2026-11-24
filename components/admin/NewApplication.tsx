@@ -24,6 +24,37 @@ import EditChat from "./EditChat";
 
 type Phase = "form" | "generating" | "edit";
 
+const IMAGE_NAME_RE = /\.(png|jpe?g|webp|gif)$/i;
+
+/** Иконка чипа файла: картинка с текстом — 🖼 (распознана LLM). */
+function fileChipIcon(u: StagedUpload): string {
+  if (u.text) return IMAGE_NAME_RE.test(u.filename) ? "🖼" : "📄";
+  return u.error ? "⚠️" : "📦";
+}
+
+/** Подсказка чипа: для картинки — сколько символов распознано. */
+function fileChipTitle(u: StagedUpload): string {
+  if (u.error) return u.error;
+  if (!u.text) return "Сохранён без извлечения текста";
+  return IMAGE_NAME_RE.test(u.filename)
+    ? `Распознано LLM: ${u.text.length} симв.`
+    : `Текст извлечён (${u.text.length} симв.)`;
+}
+
+/** Строка проблем пачки: не загрузившиеся и сохранённые без текста.
+ *  Пустая строка — если всё в порядке. */
+function problemsMessage(uploaded: StagedUpload[], failed: string[]): string {
+  const parts: string[] = [];
+  if (failed.length > 0) parts.push(`Не удалось загрузить: ${failed.join("; ")}`);
+  const problems = uploaded.filter((u) => u.error);
+  if (problems.length > 0) {
+    parts.push(
+      `Сохранено, но текст не извлечён: ${problems.map((u) => `${u.filename} (${u.error})`).join("; ")}`
+    );
+  }
+  return parts.join(". ");
+}
+
 export default function NewApplication() {
   const router = useRouter();
   const [phase, setPhase] = useState<Phase>("form");
@@ -64,6 +95,13 @@ export default function NewApplication() {
   const [stagedFiles, setStagedFiles] = useState<StagedUpload[]>([]);
   const [specLoading, setSpecLoading] = useState(false);
   const [specError, setSpecError] = useState("");
+  // Статус обработки файлов ТЗ: «Обрабатываю файлы (2 из 5)…»
+  const [specStatus, setSpecStatus] = useState("");
+  // Вакансия скриншотами: картинки распознаются на сервере (LLM), дословный
+  // текст встаёт в поле вакансии
+  const [vacancyLoading, setVacancyLoading] = useState(false);
+  const [vacancyStatus, setVacancyStatus] = useState("");
+  const [vacancyError, setVacancyError] = useState("");
 
   // Результат генерации
   const [cvMarkdown, setCvMarkdown] = useState("");
@@ -96,18 +134,84 @@ export default function NewApplication() {
   // (рекомендация площадки ~60 слов), FL.ru — 5000.
   const coverLimit = isKwork ? 2000 : isProfi ? 500 : 5000;
 
+  /**
+   * Загружает файлы по одному, до 3 одновременно, и показывает прогресс:
+   * сервер для каждой картинки ходит в LLM (несколько секунд), поэтому большая
+   * пачка занимает время. Результат — в исходном порядке файлов, независимо
+   * от того, какие загрузки завершились раньше.
+   */
+  async function uploadWithProgress(
+    token: string,
+    files: File[],
+    label: string,
+    onStatus: (status: string) => void,
+  ): Promise<{ uploaded: StagedUpload[]; failed: string[] }> {
+    const CONCURRENCY = 3;
+    const results: (StagedUpload | null)[] = new Array(files.length).fill(null);
+    const failed: string[] = [];
+    let done = 0;
+    onStatus(`${label}…`);
+    let next = 0;
+    const worker = async () => {
+      while (next < files.length) {
+        const i = next++;
+        try {
+          results[i] = (await uploadFiles(token, [files[i]]))[0] ?? null;
+        } catch (err) {
+          failed.push(`${files[i].name} (${(err as Error).message})`);
+        }
+        done += 1;
+        onStatus(`${label} (${done} из ${files.length})…`);
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, files.length) }, worker));
+    return {
+      uploaded: results.filter((u): u is StagedUpload => u !== null),
+      failed,
+    };
+  }
+
+  async function handleVacancyImages(e: React.ChangeEvent<HTMLInputElement>) {
+    const fileList = e.target.files;
+    if (!fileList || fileList.length === 0) return;
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (!token) return;
+    setVacancyLoading(true);
+    setVacancyError("");
+    try {
+      const { uploaded, failed } = await uploadWithProgress(
+        token, Array.from(fileList), "Распознаю картинки", setVacancyStatus,
+      );
+      setStagedFiles((prev) => [...prev, ...uploaded]);
+      // Скриншоты — страницы одного документа: текст в их порядке, без имён
+      // файлов (для LLM они ничего не значат).
+      const texts = uploaded.filter((u) => u.text).map((u) => u.text as string);
+      if (texts.length > 0) {
+        const block = texts.join("\n\n---\n\n");
+        setVacancyText((prev) => (prev.trim() ? `${prev}\n\n---\n\n${block}` : block));
+      }
+      setVacancyError(problemsMessage(uploaded, failed));
+    } finally {
+      setVacancyLoading(false);
+      setVacancyStatus("");
+      e.target.value = ""; // сброс, чтобы можно было выбрать те же файлы снова
+    }
+  }
+
   async function handleSpecUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const fileList = e.target.files;
     if (!fileList || fileList.length === 0) return;
-    const files = Array.from(fileList);
     const token = localStorage.getItem(TOKEN_KEY);
     if (!token) return;
     setSpecLoading(true);
     setSpecError("");
     try {
       // Любые типы: файлы сохраняются сразу (привяжутся к заявке при
-      // сохранении), текст извлекается best-effort (pdf/docx/txt).
-      const uploaded = await uploadFiles(token, files);
+      // сохранении), текст извлекается best-effort: pdf/docx/txt — парсером,
+      // картинки — распознаванием LLM.
+      const { uploaded, failed } = await uploadWithProgress(
+        token, Array.from(fileList), "Обрабатываю файлы", setSpecStatus,
+      );
       setStagedFiles((prev) => [...prev, ...uploaded]);
       const texts = uploaded
         .filter((u) => u.text)
@@ -117,16 +221,10 @@ export default function NewApplication() {
           prev.trim() ? prev + "\n\n---\n\n" + texts.join("\n\n---\n\n") : texts.join("\n\n---\n\n")
         );
       }
-      const problems = uploaded.filter((u) => u.error);
-      if (problems.length > 0) {
-        setSpecError(
-          `Сохранено, но текст не извлечён: ${problems.map((u) => `${u.filename} (${u.error})`).join("; ")}`
-        );
-      }
-    } catch (err) {
-      setSpecError(`Ошибка загрузки: ${(err as Error).message}`);
+      setSpecError(problemsMessage(uploaded, failed));
     } finally {
       setSpecLoading(false);
+      setSpecStatus("");
       e.target.value = ""; // сбросить input чтобы можно было загрузить те же файлы снова
     }
   }
@@ -138,7 +236,8 @@ export default function NewApplication() {
       await deleteStagedUpload(token, u.id);
       setStagedFiles((prev) => prev.filter((f) => f.id !== u.id));
     } catch (e) {
-      setSpecError(`Не удалось убрать файл: ${(e as Error).message}`);
+      // Список файлов общий для всех типов отклика — ошибка в общий блок
+      setError(`Не удалось убрать файл: ${(e as Error).message}`);
     }
   }
 
@@ -517,6 +616,59 @@ export default function NewApplication() {
             className="bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[200px] resize-y"
           />
 
+          {/* Вакансия скриншотами: LLM распознаёт текст, он встаёт в поле выше */}
+          <div className="flex items-center justify-between gap-3 mb-1">
+            <span
+              className={`text-[11px] ${
+                vacancyLoading ? "text-blue-400 animate-pulse" : "text-gray-600"
+              }`}
+            >
+              {vacancyLoading
+                ? vacancyStatus
+                : "Вакансия в картинках — загрузите скриншоты, текст распознается в поле выше"}
+            </span>
+            <label
+              title="PNG, JPG, WebP или GIF — по порядку; текст распознается и добавится в поле вакансии"
+              className="text-xs px-2.5 py-1 rounded-lg border bg-gray-800 border-gray-700 text-gray-400 hover:text-white cursor-pointer transition-colors shrink-0"
+            >
+              📎 Вакансия — скриншотами
+              <input
+                type="file"
+                multiple
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                onChange={handleVacancyImages}
+                className="hidden"
+                disabled={vacancyLoading}
+              />
+            </label>
+          </div>
+          {vacancyError && <p className="text-xs text-red-400 mb-2">{vacancyError}</p>}
+
+          {/* Прикреплённые файлы — общий список для всех типов отклика */}
+          {stagedFiles.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mb-1">
+              {stagedFiles.map((u) => (
+                <span
+                  key={u.id || u.filename}
+                  title={fileChipTitle(u)}
+                  className="inline-flex items-center gap-1 text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1"
+                >
+                  {fileChipIcon(u)} {u.filename}
+                  {u.id && (
+                    <button
+                      type="button"
+                      onClick={() => removeStagedFile(u)}
+                      className="text-gray-500 hover:text-red-400"
+                      title="Убрать файл (распознанный текст в полях останется)"
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              ))}
+            </div>
+          )}
+
           {/* ТЗ заказа (PDF + textarea) — для фриланс-заказов и конкурсов */}
           {isFreelanceLike && (
           <div>
@@ -536,33 +688,10 @@ export default function NewApplication() {
               </label>
             </div>
             {specLoading && (
-              <p className="text-xs text-blue-400 mb-2">Извлечение текста из PDF...</p>
+              <p className="text-xs text-blue-400 animate-pulse mb-2">{specStatus}</p>
             )}
             {specError && (
               <p className="text-xs text-red-400 mb-2">{specError}</p>
-            )}
-            {stagedFiles.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2">
-                {stagedFiles.map((u) => (
-                  <span
-                    key={u.id}
-                    title={u.error ?? (u.text ? `Текст извлечён (${u.text.length} симв.)` : "Сохранён без извлечения текста")}
-                    className="inline-flex items-center gap-1 text-xs bg-gray-800 border border-gray-700 rounded-lg px-2 py-1"
-                  >
-                    {u.text ? "📄" : u.error ? "⚠️" : "📦"} {u.filename}
-                    {u.id && (
-                      <button
-                        type="button"
-                        onClick={() => removeStagedFile(u)}
-                        className="text-gray-500 hover:text-red-400"
-                        title="Убрать файл (текст в поле ТЗ останется)"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </span>
-                ))}
-              </div>
             )}
             {specText && (
               <div className="text-xs text-gray-500 mb-1">
@@ -572,7 +701,7 @@ export default function NewApplication() {
             <textarea
               value={specText}
               onChange={(e) => setSpecText(e.target.value)}
-              placeholder="Вставьте текст ТЗ вручную или загрузите PDF выше..."
+              placeholder="Вставьте текст ТЗ вручную или загрузите файлы выше..."
               className="w-full bg-gray-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 min-h-[100px] resize-y"
             />
           </div>
