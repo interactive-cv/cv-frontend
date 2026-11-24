@@ -778,7 +778,8 @@ export interface StagedUpload {
 }
 
 /** Загрузка файлов (любых) до создания заявки: сохраняются сразу,
- *  текст извлекается best-effort (pdf/docx/txt). */
+ *  текст извлекается best-effort: pdf/docx/txt — парсером,
+ *  картинки (PNG/JPEG/WebP/GIF) — распознаванием LLM. */
 export async function uploadFiles(
   token: string,
   files: File[]
