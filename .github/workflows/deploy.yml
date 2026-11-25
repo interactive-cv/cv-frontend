@@ -14,6 +14,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 70
     steps:
       - name: Checkout cv-frontend
         uses: actions/checkout@v5
@@ -49,25 +50,36 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             ./ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/home/deploy/libera_cv/cv-frontend/
 
-      - name: Rebuild nextjs on VPS
+      - name: Deploy nextjs on VPS (detached)
+        # Как в cv-backend: деплой запускается nohup'ом на сервере
+        # (deploy/deploy-nextjs.sh), результат опрашивается короткими сессиями.
+        # Долгая ssh-сессия раннер(US)→VPS(РФ) рвётся по транзиту, а её команда
+        # оставалась на сервере — и потом останавливала уже поднятое.
+        # Скрипт сначала собирает образ и лишь затем пересоздаёт контейнер:
+        # на время сборки прод работает на прежнем.
+        # Лог: /tmp/deploy_frontend_ci.log. Ждём до 45 минут.
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
-            set -e
-            # Тот же лок, что в backend deploy.yml: деплои двух репо
-            # сериализуются на хосте (concurrency-группы GitHub — per-repo).
-            exec 9>/tmp/libera_cv_deploy.lock
-            flock 9
-            cd /home/deploy/libera_cv/cv-backend
-            # Убираем осиротевшие контейнеры nextjs от предыдущих упавших деплоев.
-            docker compose -f docker-compose.prod.yml rm -f -s nextjs 2>/dev/null || true
-            docker compose -f docker-compose.prod.yml up -d --build nextjs
-            flock -u 9
-          '
-
+          SSH="ssh -i ~/.ssh/deploy_key -o ConnectTimeout=20 ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}"
+          $SSH 'rm -f /tmp/deploy_frontend_ci.done /tmp/deploy_frontend_ci.log; nohup bash -c "bash /home/deploy/libera_cv/cv-frontend/deploy/deploy-nextjs.sh > /tmp/deploy_frontend_ci.log 2>&1; echo \$? > /tmp/deploy_frontend_ci.done" >/dev/null 2>&1 & echo launched'
+          rc=""
+          for i in $(seq 1 270); do
+            sleep 10
+            rc=$($SSH 'cat /tmp/deploy_frontend_ci.done 2>/dev/null || true' 2>/dev/null || true)
+            if [ -n "$rc" ]; then break; fi
+          done
+          $SSH 'tail -40 /tmp/deploy_frontend_ci.log 2>/dev/null' || true
+          if [ -z "$rc" ]; then
+            echo "⏳ деплой ещё выполняется на сервере — прод работает на прежней версии. Лог на VPS: /tmp/deploy_frontend_ci.log"
+            exit 1
+          fi
+          if [ "$rc" != "0" ]; then
+            echo "❌ deploy failed (rc=$rc). Прод остаётся на прежней версии, если сбой был до переключения."
+            exit 1
+          fi
+          echo "✅ deploy OK"
       - name: Smoke test
         run: |
-          sleep 8
-          for i in 1 2 3; do
+          for i in 1 2 3 4 5 6; do
             if curl -sf https://cv.libera.pro | grep -q '<html'; then
               echo "✅ frontend деплой завершён"
               exit 0
